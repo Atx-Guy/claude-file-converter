@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Conversion History{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="mb-4">Your Conversion History</h1>
+            
+            {% if conversions %}
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-0">Recent Conversions</h5>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <span class="text-muted">{{ conversions|length }} of {{ get_conversion_count() }} conversions</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Input File</th>
+                                    <th>Output File</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for conversion in conversions %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="operation-icon me-3">
+                                                <i class="bi {{ conversion.icon_class }} fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ conversion.operation_display_name }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ conversion.input_filename }}</td>
+                                    <td>{{ conversion.output_filename }}</td>
+                                    <td>{{ conversion.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary repeat-conversion" 
+                                                    data-operation="{{ conversion.operation }}" 
+                                                    data-input="{{ conversion.input_filename }}"
+                                                    data-output="{{ conversion.output_filename }}">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary conversion-details" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#conversionDetailsModal" 
+                                                    data-id="{{ conversion.id }}">
+                                                <i class="bi bi-info-circle"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <nav aria-label="Conversion history pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-clock-history display-1 text-muted mb-3"></i>
+                        <h3>No conversion history yet</h3>
+                        <p class="text-muted mb-4">You haven't performed any file conversions yet.</p>
+                        <a href="/" class="btn btn-primary">Start Converting</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Conversion Details Modal -->
+<div class="modal fade" id="conversionDetailsModal" tabindex="-1" aria-labelledby="conversionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="conversionDetailsModalLabel">Conversion Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded dynamically -->
+                <div class="text-center py-4" id="detailsLoader">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="conversionDetailsContent" class="d-none">
+                    <dl class="row">
+                        <dt class="col-sm-4">Operation:</dt>
+                        <dd class="col-sm-8" id="detailOperation"></dd>
+                        
+                        <dt class="col-sm-4">Input File:</dt>
+                        <dd class="col-sm-8" id="detailInputFile"></dd>
+                        
+                        <dt class="col-sm-4">Output File:</dt>
+                        <dd class="col-sm-8" id="detailOutputFile"></dd>
+                        
+                        <dt class="col-sm-4">Date:</dt>
+                        <dd class="col-sm-8" id="detailDate"></dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="repeatConversionBtn">Repeat Conversion</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .operation-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background-color: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+    }
+    
+    .dark-theme .operation-icon {
+        background-color: rgba(99, 102, 241, 0.2);
+        color: var(--dark-primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle modal for conversion details
+    const conversionDetailsModal = document.getElementById('conversionDetailsModal');
+    if (conversionDetailsModal) {
+        conversionDetailsModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const conversionId = button.getAttribute('data-id');
+            
+            // Show loader and hide content
+            document.getElementById('detailsLoader').classList.remove('d-none');
+            document.getElementById('conversionDetailsContent').classList.add('d-none');
+            
+            // Simulate fetching details (would be replaced with an actual API call)
+            setTimeout(function() {
+                // In a real implementation, fetch data from server
+                // Here, we're just getting data from the table row for demonstration
+                const row = button.closest('tr');
+                const operation = row.querySelector('h6').textContent;
+                const inputFile = row.cells[1].textContent;
+                const outputFile = row.cells[2].textContent;
+                const date = row.cells[3].textContent;
+                
+                // Update modal content
+                document.getElementById('detailOperation').textContent = operation;
+                document.getElementById('detailInputFile').textContent = inputFile;
+                document.getElementById('detailOutputFile').textContent = outputFile;
+                document.getElementById('detailDate').textContent = date;
+                
+                // Store data for repeat button
+                document.getElementById('repeatConversionBtn').setAttribute('data-operation', 
+                    row.querySelector('.repeat-conversion').getAttribute('data-operation'));
+                document.getElementById('repeatConversionBtn').setAttribute('data-input', 
+                    row.querySelector('.repeat-conversion').getAttribute('data-input'));
+                document.getElementById('repeatConversionBtn').setAttribute('data-output', 
+                    row.querySelector('.repeat-conversion').getAttribute('data-output'));
+                
+                // Hide loader and show content
+                document.getElementById('detailsLoader').classList.add('d-none');
+                document.getElementById('conversionDetailsContent').classList.remove('d-none');
+            }, 800);
+        });
+    }
+    
+    // Handle repeat conversion buttons
+    const repeatButtons = document.querySelectorAll('.repeat-conversion, #repeatConversionBtn');
+    repeatButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const operation = this.getAttribute('data-operation');
+            const inputFile = this.getAttribute('data-input');
+            const outputFile = this.getAttribute('data-output');
+            
+            // Close modal if open
+            const modal = bootstrap.Modal.getInstance(document.getElementById('conversionDetailsModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Redirect to appropriate conversion page based on operation
+            let redirectUrl = '/';
+            
+            if (operation.startsWith('pdf_')) {
+                redirectUrl = `/pdf/${operation.replace('pdf_', '')}`;
+            } else if (operation.startsWith('convert_')) {
+                const type = operation.replace('convert_', '');
+                redirectUrl = `/convert?type=${type}`;
+            }
+            
+            window.location.href = redirectUrl;
+        });
+    });
+});
+</script>
+{% endblock %}

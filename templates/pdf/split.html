@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Split PDF{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="mb-3">Split PDF</h1>
+                <p class="lead text-muted">Extract specific pages or split a PDF into multiple files</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="pdfSplitForm" action="{{ url_for('pdf.split_pdf') }}" method="post" enctype="multipart/form-data">
+                        <!-- File Upload Section -->
+                        <div class="upload-section mb-4">
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-message">
+                                    <img src="/static/img/icons/pdf.svg" alt="PDF" width="48" class="mb-3">
+                                    <p>Drag and drop your PDF file here</p>
+                                    <span class="drop-subtitle">or</span>
+                                </div>
+                                
+                                <input type="file" id="fileInput" name="file" class="d-none" accept=".pdf">
+                                <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('fileInput').click()">
+                                    Choose PDF File
+                                </button>
+                            </div>
+                            
+                            <div id="fileInfo" class="file-info d-none">
+                                <div class="file-details">
+                                    <div class="d-flex align-items-center">
+                                        <div class="pdf-icon me-3">
+                                            <i class="bi bi-file-earmark-pdf fs-2 text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <p class="file-name mb-0">File: <span id="fileName"></span></p>
+                                            <p class="file-size mb-0">Size: <span id="fileSize"></span></p>
+                                            <p class="file-pages mb-0 mt-1">Total pages: <span id="pageCount">...</span></p>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="removeFileBtn">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Split Options Section -->
+                        <div id="splitOptions" class="d-none">
+                            <h5 class="mb-3">Split Options</h5>
+                            
+                            <div class="mb-3">
+                                <label for="splitMode" class="form-label">Split Mode</label>
+                                <select id="splitMode" class="form-select" onchange="updateSplitOptions()">
+                                    <option value="range">Extract specific pages</option>
+                                    <option value="single">Extract each page</option>
+                                    <option value="interval">Split by interval</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Page Range Option -->
+                            <div id="rangeOption">
+                                <div class="mb-3">
+                                    <label for="pageRanges" class="form-label">Page Ranges</label>
+                                    <input type="text" id="pageRanges" name="page_ranges" class="form-control" placeholder="e.g., 1-3, 5, 7-9">
+                                    <div class="form-text">Separate ranges with commas. Example: 1-3, 5, 7-9</div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="separateFiles">
+                                        <label class="form-check-label" for="separateFiles">
+                                            Create separate files for each range
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Interval Option -->
+                            <div id="intervalOption" class="d-none">
+                                <div class="mb-3">
+                                    <label for="pageInterval" class="form-label">Split every</label>
+                                    <div class="input-group">
+                                        <input type="number" id="pageInterval" class="form-control" value="1" min="1" max="100">
+                                        <span class="input-group-text">page(s)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Output Options -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">Output Options</h5>
+                                <div class="mb-3">
+                                    <label for="outputNamePattern" class="form-label">Output Filename</label>
+                                    <input type="text" id="outputNamePattern" class="form-control" placeholder="original_[page]">
+                                    <div class="form-text">Use [page] or [range] as placeholders</div>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="downloadAsZip" checked>
+                                    <label class="form-check-label" for="downloadAsZip">
+                                        Download as ZIP archive (for multiple files)
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg" id="splitPdfBtn">
+                                    <i class="bi bi-scissors me-2"></i> Split PDF
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2 text-warning"></i>
+                        Tips for Splitting PDFs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li class="mb-2">Use commas to separate multiple page ranges (e.g., 1-3, 5, 7-9)</li>
+                        <li class="mb-2">A single number extracts just that page (e.g., 5)</li>
+                        <li class="mb-2">For a range, use a hyphen (e.g., 1-5)</li>
+                        <li>If you need to extract many ranges, consider multiple extractions to avoid confusion</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pdf-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #pageRanges.invalid {
+        border-color: #dc3545;
+    }
+    
+    #pageRanges.invalid:focus {
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .pdf-icon {
+        color: #ff6b6b !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // File upload handling
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const pageCount = document.getElementById('pageCount');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const splitOptions = document.getElementById('splitOptions');
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo();
+        }
+    });
+    
+    fileInput.addEventListener('change', updateFileInfo);
+    
+    function updateFileInfo() {
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            
+            // Check if it's a PDF
+            if (!file.type.match('application/pdf')) {
+                alert('Please select a PDF file.');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.remove('d-none');
+            dropZone.classList.add('d-none');
+            splitOptions.classList.remove('d-none');
+            
+            // Simulate getting page count (in a real app, would use PDF.js or server-side)
+            pageCount.textContent = '...';
+            setTimeout(function() {
+                // Random page count between 1 and 30 for demo
+                const randomPageCount = Math.floor(Math.random() * 30) + 1;
+                pageCount.textContent = randomPageCount;
+                
+                // Set max page interval based on page count
+                document.getElementById('pageInterval').max = randomPageCount;
+            }, 1000);
+        }
+    }
+    
+    // Remove file button
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.classList.add('d-none');
+        dropZone.classList.remove('d-none');
+        splitOptions.classList.add('d-none');
+    });
+    
+    // Split mode selection
+    window.updateSplitOptions = function() {
+        const splitMode = document.getElementById('splitMode').value;
+        const rangeOption = document.getElementById('rangeOption');
+        const intervalOption = document.getElementById('intervalOption');
+        
+        if (splitMode === 'range') {
+            rangeOption.classList.remove('d-none');
+            intervalOption.classList.add('d-none');
+        } else if (splitMode === 'interval') {
+            rangeOption.classList.add('d-none');
+            intervalOption.classList.remove('d-none');
+        } else { // single
+            rangeOption.classList.add('d-none');
+            intervalOption.classList.add('d-none');
+        }
+    };
+    
+    // Form validation and submission
+    const pdfSplitForm = document.getElementById('pdfSplitForm');
+    const pageRangesInput = document.getElementById('pageRanges');
+    
+    pdfSplitForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const splitMode = document.getElementById('splitMode').value;
+        
+        if (splitMode === 'range') {
+            // Validate page ranges
+            const pageRanges = pageRangesInput.value.trim();
+            if (!pageRanges) {
+                pageRangesInput.classList.add('invalid');
+                return;
+            }
+            
+            // Validate format with regex (allows 1-5, 7, 9-12 format)
+            const rangeRegex = /^(\d+(-\d+)?)(,\s*\d+(-\d+)?)*$/;
+            if (!rangeRegex.test(pageRanges)) {
+                pageRangesInput.classList.add('invalid');
+                return;
+            }
+            
+            pageRangesInput.classList.remove('invalid');
+        } else if (splitMode === 'interval') {
+            // Get interval and create ranges
+            const interval = parseInt(document.getElementById('pageInterval').value);
+            const totalPages = parseInt(pageCount.textContent);
+            
+            let ranges = [];
+            for (let i = 1; i <= totalPages; i += interval) {
+                const end = Math.min(i + interval - 1, totalPages);
+                ranges.push(i === end ? i.toString() : `${i}-${end}`);
+            }
+            
+            pageRangesInput.value = ranges.join(',');
+        } else { // single pages
+            // Create ranges for each page
+            const totalPages = parseInt(pageCount.textContent);
+            let ranges = [];
+            for (let i = 1; i <= totalPages; i++) {
+                ranges.push(i.toString());
+            }
+            pageRangesInput.value = ranges.join(',');
+        }
+        
+        // Show loading overlay
+        document.getElementById('loadingOverlay').classList.add('show');
+        
+        // Submit the form
+        this.submit();
+    });
+    
+    pageRangesInput.addEventListener('input', function() {
+        this.classList.remove('invalid');
+    });
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+});
+</script>
+{% endblock %}
