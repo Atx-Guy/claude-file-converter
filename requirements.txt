@@ -35,7 +35,10 @@ beautifulsoup4==4.11.2
 # lxml==4.9.2
 
 # Audio Processing
-pydub==0.25.1
+soundfile==0.12.1
+pydub==0.25.1; python_version < '3.13'
+# Remove simpleaudio as it's not compatible
+numpy>=1.24.0  # Required for soundfile
 ffmpeg-python==0.2.0
 
 # Utilities
