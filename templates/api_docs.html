@@ -1,0 +1,904 @@
+{% extends "base.html" %}
+
+{% block title %}API Documentation{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- API Navigation Sidebar -->
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">API Contents</h5>
+                </div>
+                <div class="card-body p-0">
+                    <nav id="api-nav" class="nav flex-column">
+                        <a class="nav-link" href="#introduction">Introduction</a>
+                        <a class="nav-link" href="#authentication">Authentication</a>
+                        <a class="nav-link" href="#rate-limits">Rate Limits</a>
+                        <a class="nav-link fw-medium" href="#endpoints">Endpoints</a>
+                        <a class="nav-link ps-4" href="#api-convert">File Conversion</a>
+                        <a class="nav-link ps-4" href="#api-pdf-split">PDF Split</a>
+                        <a class="nav-link ps-4" href="#api-pdf-merge">PDF Merge</a>
+                        <a class="nav-link ps-4" href="#api-pdf-compress">PDF Compress</a>
+                        <a class="nav-link ps-4" href="#api-pdf-protect">PDF Protect</a>
+                        <a class="nav-link" href="#error-handling">Error Handling</a>
+                        <a class="nav-link" href="#examples">Code Examples</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <!-- API Documentation Content -->
+            <div class="api-docs">
+                <h1 class="mb-4">API Documentation</h1>
+                
+                <!-- Introduction Section -->
+                <section id="introduction" class="mb-5">
+                    <h2 class="h3 mb-3">Introduction</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <p>Welcome to the File Converter API. This RESTful API allows you to programmatically convert files between various formats and perform PDF operations.</p>
+                            <p>Base URL: <code>https://yourserver.com/api</code></p>
+                            
+                            <div class="api-info-box my-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="api-info-icon me-3">
+                                        <i class="bi bi-info-circle-fill text-info"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0">All API requests must include the appropriate content type and authentication headers.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Authentication Section -->
+                <section id="authentication" class="mb-5">
+                    <h2 class="h3 mb-3">Authentication</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <p>The API uses API key authentication. You can obtain an API key from your account dashboard after registering.</p>
+                            
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span>Request Headers</span>
+                                </div>
+                                <pre><code>X-API-Key: your_api_key_here</code></pre>
+                            </div>
+                            
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Keep your API key secure. Do not share it or expose it in client-side code.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Rate Limits Section -->
+                <section id="rate-limits" class="mb-5">
+                    <h2 class="h3 mb-3">Rate Limits</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <p>To ensure fair usage, the API has the following rate limits:</p>
+                            
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Plan</th>
+                                            <th>Requests/Minute</th>
+                                            <th>Requests/Day</th>
+                                            <th>Max File Size</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Free</td>
+                                            <td>10</td>
+                                            <td>100</td>
+                                            <td>10 MB</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Basic</td>
+                                            <td>30</td>
+                                            <td>500</td>
+                                            <td>50 MB</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Premium</td>
+                                            <td>100</td>
+                                            <td>2000</td>
+                                            <td>200 MB</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <p class="mb-0 mt-3">Rate limit headers are included in all API responses:</p>
+                            <ul>
+                                <li><code>X-RateLimit-Limit</code>: Number of requests allowed per minute</li>
+                                <li><code>X-RateLimit-Remaining</code>: Number of requests remaining in the current window</li>
+                                <li><code>X-RateLimit-Reset</code>: Time when the current rate limit window resets (Unix timestamp)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Endpoints Section -->
+                <section id="endpoints" class="mb-5">
+                    <h2 class="h3 mb-3">Endpoints</h2>
+                    
+                    <!-- General File Conversion Endpoint -->
+                    <div id="api-convert" class="endpoint-section mb-4">
+                        <div class="endpoint-header">
+                            <div class="endpoint-method">POST</div>
+                            <div class="endpoint-path">/api/convert</div>
+                        </div>
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <h4 class="h5 mb-3">Convert Files</h4>
+                                <p>Convert a file from one format to another.</p>
+                                
+                                <h5 class="h6 mt-4 mb-2">Request Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Type</th>
+                                                <th>Required</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>file</code></td>
+                                                <td>File</td>
+                                                <td>Yes</td>
+                                                <td>The file to convert.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>output_format</code></td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td>The target format (e.g., png, jpg, mp3, pdf).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>type</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Conversion type (audio, image, document). If not provided, it will be determined automatically.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>options</code></td>
+                                                <td>JSON</td>
+                                                <td>No</td>
+                                                <td>Additional conversion options (e.g., quality, bitrate).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>output_filename</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Custom filename for the output file.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Example Request</h5>
+                                <div class="code-block">
+                                    <div class="code-header">
+                                        <span>cURL</span>
+                                    </div>
+                                    <pre><code>curl -X POST "https://yourserver.com/api/convert" \
+     -H "X-API-Key: your_api_key_here" \
+     -F "file=@image.png" \
+     -F "output_format=jpg" \
+     -F "options={\"quality\":90}"</code></pre>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Response</h5>
+                                <p>Returns the converted file as a binary response.</p>
+                                
+                                <h5 class="h6 mt-4 mb-2">Error Responses</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Status Code</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>400</td>
+                                                <td>Bad request (missing parameters or invalid input)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>401</td>
+                                                <td>Unauthorized (invalid API key)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>415</td>
+                                                <td>Unsupported media type</td>
+                                            </tr>
+                                            <tr>
+                                                <td>500</td>
+                                                <td>Internal server error</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF Split Endpoint -->
+                    <div id="api-pdf-split" class="endpoint-section mb-4">
+                        <div class="endpoint-header">
+                            <div class="endpoint-method">POST</div>
+                            <div class="endpoint-path">/api/pdf/split</div>
+                        </div>
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <h4 class="h5 mb-3">Split PDF</h4>
+                                <p>Split a PDF file into multiple files based on page ranges.</p>
+                                
+                                <h5 class="h6 mt-4 mb-2">Request Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Type</th>
+                                                <th>Required</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>file</code></td>
+                                                <td>File</td>
+                                                <td>Yes</td>
+                                                <td>The PDF file to split.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>page_ranges</code></td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td>Page ranges to extract (e.g., "1-3,5,7-9").</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>output_filename</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Custom filename for the output file.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Example Request</h5>
+                                <div class="code-block">
+                                    <div class="code-header">
+                                        <span>cURL</span>
+                                    </div>
+                                    <pre><code>curl -X POST "https://yourserver.com/api/pdf/split" \
+     -H "X-API-Key: your_api_key_here" \
+     -F "file=@document.pdf" \
+     -F "page_ranges=1-3,5,7-9"</code></pre>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Response</h5>
+                                <p>Returns a ZIP file containing the split PDF files, or a single PDF file if only one page range was specified.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF Merge Endpoint -->
+                    <div id="api-pdf-merge" class="endpoint-section mb-4">
+                        <div class="endpoint-header">
+                            <div class="endpoint-method">POST</div>
+                            <div class="endpoint-path">/api/pdf/merge</div>
+                        </div>
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <h4 class="h5 mb-3">Merge PDFs</h4>
+                                <p>Merge multiple PDF files into a single PDF.</p>
+                                
+                                <h5 class="h6 mt-4 mb-2">Request Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Type</th>
+                                                <th>Required</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>files[]</code></td>
+                                                <td>Array of Files</td>
+                                                <td>Yes</td>
+                                                <td>The PDF files to merge (minimum 2).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>output_filename</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Custom filename for the output file (default: "merged.pdf").</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Example Request</h5>
+                                <div class="code-block">
+                                    <div class="code-header">
+                                        <span>cURL</span>
+                                    </div>
+                                    <pre><code>curl -X POST "https://yourserver.com/api/pdf/merge" \
+     -H "X-API-Key: your_api_key_here" \
+     -F "files[]=@document1.pdf" \
+     -F "files[]=@document2.pdf" \
+     -F "output_filename=combined_document"</code></pre>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Response</h5>
+                                <p>Returns the merged PDF file.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF Compress Endpoint -->
+                    <div id="api-pdf-compress" class="endpoint-section mb-4">
+                        <div class="endpoint-header">
+                            <div class="endpoint-method">POST</div>
+                            <div class="endpoint-path">/api/pdf/compress</div>
+                        </div>
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <h4 class="h5 mb-3">Compress PDF</h4>
+                                <p>Compress a PDF file to reduce its size.</p>
+                                
+                                <h5 class="h6 mt-4 mb-2">Request Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Type</th>
+                                                <th>Required</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>file</code></td>
+                                                <td>File</td>
+                                                <td>Yes</td>
+                                                <td>The PDF file to compress.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>quality</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Compression quality: "low", "medium", or "high" (default: "medium").</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>output_filename</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Custom filename for the output file.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Example Request</h5>
+                                <div class="code-block">
+                                    <div class="code-header">
+                                        <span>cURL</span>
+                                    </div>
+                                    <pre><code>curl -X POST "https://yourserver.com/api/pdf/compress" \
+     -H "X-API-Key: your_api_key_here" \
+     -F "file=@large_document.pdf" \
+     -F "quality=high"</code></pre>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Response</h5>
+                                <p>Returns the compressed PDF file.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF Protect Endpoint -->
+                    <div id="api-pdf-protect" class="endpoint-section">
+                        <div class="endpoint-header">
+                            <div class="endpoint-method">POST</div>
+                            <div class="endpoint-path">/api/pdf/protect</div>
+                        </div>
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <h4 class="h5 mb-3">Protect PDF</h4>
+                                <p>Add password protection to a PDF file.</p>
+                                
+                                <h5 class="h6 mt-4 mb-2">Request Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Type</th>
+                                                <th>Required</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>file</code></td>
+                                                <td>File</td>
+                                                <td>Yes</td>
+                                                <td>The PDF file to protect.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>user_password</code></td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td>Password required to open the document.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>owner_password</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Password for full access rights (defaults to user_password if not provided).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>output_filename</code></td>
+                                                <td>String</td>
+                                                <td>No</td>
+                                                <td>Custom filename for the output file.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Example Request</h5>
+                                <div class="code-block">
+                                    <div class="code-header">
+                                        <span>cURL</span>
+                                    </div>
+                                    <pre><code>curl -X POST "https://yourserver.com/api/pdf/protect" \
+     -H "X-API-Key: your_api_key_here" \
+     -F "file=@document.pdf" \
+     -F "user_password=secretpassword" \
+     -F "owner_password=adminpassword"</code></pre>
+                                </div>
+                                
+                                <h5 class="h6 mt-4 mb-2">Response</h5>
+                                <p>Returns the password-protected PDF file.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Error Handling Section -->
+                <section id="error-handling" class="mb-5">
+                    <h2 class="h3 mb-3">Error Handling</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <p>All errors are returned in a consistent JSON format.</p>
+                            
+                            <div class="code-block">
+                                <pre><code>{
+  "error": "Error message describing what went wrong"
+}</code></pre>
+                            </div>
+                            
+                            <h5 class="h6 mt-4 mb-2">Common Error Codes</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Status Code</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>400</td>
+                                            <td>Bad Request - Missing or invalid parameters</td>
+                                        </tr>
+                                        <tr>
+                                            <td>401</td>
+                                            <td>Unauthorized - Invalid or missing API key</td>
+                                        </tr>
+                                        <tr>
+                                            <td>403</td>
+                                            <td>Forbidden - Insufficient permissions or rate limit exceeded</td>
+                                        </tr>
+                                        <tr>
+                                            <td>404</td>
+                                            <td>Not Found - Endpoint does not exist</td>
+                                        </tr>
+                                        <tr>
+                                            <td>415</td>
+                                            <td>Unsupported Media Type - File format not supported</td>
+                                        </tr>
+                                        <tr>
+                                            <td>422</td>
+                                            <td>Unprocessable Entity - File could not be processed</td>
+                                        </tr>
+                                        <tr>
+                                            <td>429</td>
+                                            <td>Too Many Requests - Rate limit exceeded</td>
+                                        </tr>
+                                        <tr>
+                                            <td>500</td>
+                                            <td>Internal Server Error - Something went wrong on the server</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Code Examples Section -->
+                <section id="examples" class="mb-5">
+                    <h2 class="h3 mb-3">Code Examples</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <ul class="nav nav-tabs" id="exampleTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="python-tab" data-bs-toggle="tab" data-bs-target="#python" type="button" role="tab" aria-controls="python" aria-selected="true">Python</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="javascript-tab" data-bs-toggle="tab" data-bs-target="#javascript" type="button" role="tab" aria-controls="javascript" aria-selected="false">JavaScript</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="php-tab" data-bs-toggle="tab" data-bs-target="#php" type="button" role="tab" aria-controls="php" aria-selected="false">PHP</button>
+                                </li>
+                            </ul>
+                            <div class="tab-content p-3" id="exampleTabsContent">
+                                <div class="tab-pane fade show active" id="python" role="tabpanel" aria-labelledby="python-tab">
+                                    <div class="code-block">
+                                        <pre><code>import requests
+
+API_KEY = 'your_api_key_here'
+API_URL = 'https://yourserver.com/api'
+
+# Convert an image file
+def convert_image(file_path, output_format, options=None):
+    url = f"{API_URL}/convert"
+    
+    headers = {
+        'X-API-Key': API_KEY
+    }
+    
+    data = {
+        'output_format': output_format,
+        'type': 'image'
+    }
+    
+    if options:
+        data['options'] = json.dumps(options)
+    
+    files = {
+        'file': open(file_path, 'rb')
+    }
+    
+    response = requests.post(url, headers=headers, data=data, files=files)
+    
+    if response.status_code == 200:
+        # Save the converted file
+        output_filename = f"converted.{output_format}"
+        with open(output_filename, 'wb') as f:
+            f.write(response.content)
+        return output_filename
+    else:
+        # Handle error
+        error = response.json()
+        raise Exception(f"API Error: {error.get('error')}")</code></pre>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="javascript" role="tabpanel" aria-labelledby="javascript-tab">
+                                    <div class="code-block">
+                                        <pre><code>// Using fetch API
+const API_KEY = 'your_api_key_here';
+const API_URL = 'https://yourserver.com/api';
+
+// Merge PDF files
+async function mergePDFs(fileList, outputFilename) {
+    const url = `${API_URL}/pdf/merge`;
+    
+    const formData = new FormData();
+    
+    // Add files to form data
+    fileList.forEach(file => {
+        formData.append('files[]', file);
+    });
+    
+    // Add output filename if provided
+    if (outputFilename) {
+        formData.append('output_filename', outputFilename);
+    }
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-API-Key': API_KEY
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to merge PDFs');
+        }
+        
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = 'merged.pdf';
+        
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="(.+)"/);
+            if (match) {
+                filename = match[1];
+            }
+        }
+        
+        // Convert response to blob and create download link
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        return true;
+    } catch (error) {
+        console.error('Error merging PDFs:', error);
+        throw error;
+    }
+}</code></pre>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="php" role="tabpanel" aria-labelledby="php-tab">
+                                    <div class="code-block">
+                                        <pre><code>&lt;?php
+// Compress a PDF file
+function compressPDF($filePath, $quality = 'medium') {
+    $apiKey = 'your_api_key_here';
+    $apiUrl = 'https://yourserver.com/api/pdf/compress';
+    
+    // Create cURL handle
+    $ch = curl_init();
+    
+    // Setup request
+    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'X-API-Key: ' . $apiKey
+    ]);
+    
+    // Create POST data
+    $postData = [
+        'file' => new CURLFile($filePath),
+        'quality' => $quality
+    ];
+    
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+    
+    // Execute request
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    // Close cURL handle
+    curl_close($ch);
+    
+    if ($httpCode === 200) {
+        // Get filename from the original file
+        $outputFilename = 'compressed_' . basename($filePath);
+        
+        // Save the compressed file
+        file_put_contents($outputFilename, $response);
+        return $outputFilename;
+    } else {
+        // Handle error
+        $error = json_decode($response, true);
+        throw new Exception('API Error: ' . ($error['error'] ?? 'Unknown error'));
+    }
+}
+?&gt;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* API Documentation Styles */
+    .api-docs h2 {
+        margin-top: 2rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+    
+    .api-info-box {
+        background-color: rgba(13, 202, 240, 0.1);
+        border-left: 4px solid #0dcaf0;
+        padding: 1rem;
+        border-radius: 0.25rem;
+    }
+    
+    .endpoint-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .endpoint-method {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .endpoint-path {
+        font-family: monospace;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .code-block {
+        background-color: #f8f9fa;
+        border: 1px solid var(--border-color);
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .code-header {
+        background-color: #e9ecef;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .code-block pre {
+        margin: 0;
+        padding: 1rem;
+        overflow-x: auto;
+    }
+    
+    .code-block code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+    }
+    
+    #api-nav .nav-link {
+        color: var(--text-secondary);
+        padding: 0.5rem 1rem;
+        border-left: 3px solid transparent;
+    }
+    
+    #api-nav .nav-link:hover,
+    #api-nav .nav-link.active {
+        color: var(--primary-color);
+        background-color: rgba(79, 70, 229, 0.05);
+        border-left-color: var(--primary-color);
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .api-docs h2 {
+        border-color: var(--dark-border-color);
+    }
+    
+    .dark-theme .api-info-box {
+        background-color: rgba(13, 202, 240, 0.05);
+    }
+    
+    .dark-theme .endpoint-method {
+        background-color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .endpoint-path {
+        color: var(--dark-text-primary);
+    }
+    
+    .dark-theme .code-block {
+        background-color: var(--dark-card-bg);
+        border-color: var(--dark-border-color);
+    }
+    
+    .dark-theme .code-header {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-color: var(--dark-border-color);
+    }
+    
+    .dark-theme .code-block code {
+        color: var(--dark-text-primary);
+    }
+    
+    .dark-theme #api-nav .nav-link {
+        color: var(--dark-text-secondary);
+    }
+    
+    .dark-theme #api-nav .nav-link:hover,
+    .dark-theme #api-nav .nav-link.active {
+        color: var(--dark-primary-color);
+        background-color: rgba(99, 102, 241, 0.1);
+        border-left-color: var(--dark-primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Highlight active section in sidebar based on scroll position
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('#api-nav a');
+    
+    window.addEventListener('scroll', function() {
+        let current = '';
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            
+            if (pageYOffset >= sectionTop - 100) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').substring(1) === current) {
+                link.classList.add('active');
+            }
+        });
+    });
+    
+    // Smooth scrolling for internal links
+    document.querySelectorAll('#api-nav a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 20,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

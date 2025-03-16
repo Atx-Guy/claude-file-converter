@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}PDF Operations Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container py-5">
+        <h1 class="dashboard-title mb-4">PDF Operations</h1>
+        <p class="dashboard-subtitle mb-5">Select an operation to transform your PDF files</p>
+        
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <!-- PDF Split Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/split.svg" alt="Split PDF" width="48">
+                        </div>
+                        <h5 class="card-title">Split PDF</h5>
+                        <p class="card-text">Extract specific pages or split a PDF into multiple files</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.split_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF Merge Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/merge.svg" alt="Merge PDFs" width="48">
+                        </div>
+                        <h5 class="card-title">Merge PDFs</h5>
+                        <p class="card-text">Combine multiple PDF files into a single document</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.merge_pdfs') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF Compress Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/compress.svg" alt="Compress PDF" width="48">
+                        </div>
+                        <h5 class="card-title">Compress PDF</h5>
+                        <p class="card-text">Reduce PDF file size while preserving quality</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.compress_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF to Images Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/pdf-to-image.svg" alt="PDF to Images" width="48">
+                        </div>
+                        <h5 class="card-title">PDF to Images</h5>
+                        <p class="card-text">Convert each page of a PDF to image format</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.pdf_to_images') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Images to PDF Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/image-to-pdf.svg" alt="Images to PDF" width="48">
+                        </div>
+                        <h5 class="card-title">Images to PDF</h5>
+                        <p class="card-text">Create a PDF from multiple image files</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.images_to_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF Protect Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/protect.svg" alt="Protect PDF" width="48">
+                        </div>
+                        <h5 class="card-title">Protect PDF</h5>
+                        <p class="card-text">Add password protection to your PDF file</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.protect_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF Unlock Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/unlock.svg" alt="Unlock PDF" width="48">
+                        </div>
+                        <h5 class="card-title">Unlock PDF</h5>
+                        <p class="card-text">Remove password protection from a PDF file</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.unlock_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF Rotate Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/rotate.svg" alt="Rotate PDF" width="48">
+                        </div>
+                        <h5 class="card-title">Rotate PDF</h5>
+                        <p class="card-text">Rotate pages in your PDF document</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.rotate_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF Watermark Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/watermark.svg" alt="Add Watermark" width="48">
+                        </div>
+                        <h5 class="card-title">Add Watermark</h5>
+                        <p class="card-text">Add text watermark to PDF pages</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.watermark_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF OCR Card -->
+            <div class="col">
+                <div class="card operation-card h-100">
+                    <div class="card-body">
+                        <div class="operation-icon">
+                            <img src="/static/img/icons/ocr.svg" alt="OCR PDF" width="48">
+                        </div>
+                        <h5 class="card-title">OCR PDF</h5>
+                        <p class="card-text">Make scanned PDFs searchable with OCR</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('pdf.ocr_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- More operations can be added here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        background-color: var(--bg-light);
+        min-height: calc(100vh - 70px);
+    }
+    
+    .dashboard-title {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .dashboard-subtitle {
+        color: var(--text-secondary);
+        max-width: 600px;
+    }
+    
+    .operation-card {
+        border-radius: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .operation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .operation-icon {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .card-title {
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .card-text {
+        color: var(--text-secondary);
+        text-align: center;
+    }
+    
+    .card-footer {
+        background-color: transparent;
+        border-top: none;
+        padding: 1rem;
+    }
+    
+    /* Dark theme support */
+    .dark-theme .dashboard-container {
+        background-color: var(--dark-bg);
+    }
+    
+    .dark-theme .dashboard-title {
+        color: var(--dark-text-primary);
+    }
+    
+    .dark-theme .dashboard-subtitle {
+        color: var(--dark-text-secondary);
+    }
+    
+    .dark-theme .operation-card {
+        background-color: var(--dark-card-bg);
+        border-color: var(--dark-border-color);
+    }
+    
+    .dark-theme .card-text {
+        color: var(--dark-text-secondary);
+    }
+</style>
+{% endblock %}

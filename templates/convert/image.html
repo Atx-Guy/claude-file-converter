@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}Image Converter{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="mb-3">Image Converter</h1>
+                <p class="lead text-muted">Convert your images between different formats with advanced options</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="imageConvertForm" action="{{ url_for('conversion.convert_file') }}" method="post" enctype="multipart/form-data">
+                        <!-- File Upload Section -->
+                        <div class="upload-section mb-4">
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-message">
+                                    <img src="/static/img/icons/image.svg" alt="Image" width="48" class="mb-3">
+                                    <p>Drag and drop your image here</p>
+                                    <span class="drop-subtitle">or</span>
+                                </div>
+                                
+                                <input type="file" id="fileInput" name="file" class="d-none" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff">
+                                <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('fileInput').click()">
+                                    Choose Image
+                                </button>
+                            </div>
+                            
+                            <div id="fileInfo" class="file-info d-none">
+                                <div class="file-details">
+                                    <div class="d-flex align-items-center">
+                                        <div class="image-preview me-3">
+                                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail">
+                                        </div>
+                                        <div>
+                                            <p class="file-name mb-0">File: <span id="fileName"></span></p>
+                                            <p class="file-size mb-0">Size: <span id="fileSize"></span></p>
+                                            <p class="file-dimensions mb-0 mt-1">Dimensions: <span id="imageDimensions">...</span></p>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="removeFileBtn">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversion Options Section -->
+                        <div id="conversionOptions" class="d-none">
+                            <h5 class="mb-3">Conversion Options</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="outputFormat" class="form-label">Output Format</label>
+                                    <select id="outputFormat" name="output_format" class="form-select" required>
+                                        <option value="" selected disabled>Select format...</option>
+                                        <option value="jpg">JPG</option>
+                                        <option value="png">PNG</option>
+                                        <option value="webp">WebP</option>
+                                        <option value="gif">GIF</option>
+                                        <option value="bmp">BMP</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="customFilename" class="form-label">Custom Filename (optional)</label>
+                                    <input type="text" id="customFilename" name="custom_filename" class="form-control" placeholder="Enter filename without extension">
+                                </div>
+                            </div>
+                            
+                            <div id="qualityOption" class="mb-3">
+                                <label for="quality" class="form-label">Quality</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="range" class="form-range flex-grow-1" id="quality" name="quality" min="1" max="100" value="90">
+                                    <span id="qualityValue" class="badge bg-primary">90%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="resizeToggle" name="resize" value="true">
+                                    <label class="form-check-label" for="resizeToggle">Resize Image</label>
+                                </div>
+                                
+                                <div id="resizeOptions" class="mt-3 ps-4 d-none">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label for="width" class="form-label small">Width (px)</label>
+                                            <input type="number" id="width" name="width" class="form-control" placeholder="Auto" min="1">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="height" class="form-label small">Height (px)</label>
+                                            <input type="number" id="height" name="height" class="form-control" placeholder="Auto" min="1">
+                                        </div>
+                                    </div>
+                                    <div class="form-text mt-1">Leave one field empty to maintain aspect ratio</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="filterToggle">
+                                    <label class="form-check-label" for="filterToggle">Apply Filter</label>
+                                </div>
+                                
+                                <div id="filterOptions" class="mt-3 ps-4 d-none">
+                                    <select id="filter" name="filter" class="form-select">
+                                        <option value="">No filter</option>
+                                        <option value="grayscale">Grayscale</option>
+                                        <option value="sepia">Sepia</option>
+                                        <option value="negative">Negative</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="adjustmentsToggle">
+                                    <label class="form-check-label" for="adjustmentsToggle">Image Adjustments</label>
+                                </div>
+                                
+                                <div id="adjustmentOptions" class="mt-3 ps-4 d-none">
+                                    <div class="mb-3">
+                                        <label for="brightness" class="form-label small">Brightness</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <input type="range" class="form-range flex-grow-1" id="brightness" name="brightness" min="0.1" max="2" step="0.1" value="1">
+                                            <span id="brightnessValue" class="badge bg-secondary">1.0</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="contrast" class="form-label small">Contrast</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <input type="range" class="form-range flex-grow-1" id="contrast" name="contrast" min="0.1" max="2" step="0.1" value="1">
+                                            <span id="contrastValue" class="badge bg-secondary">1.0</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-0">
+                                        <label for="sharpness" class="form-label small">Sharpness</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <input type="range" class="form-range flex-grow-1" id="sharpness" name="sharpness" min="0.1" max="2" step="0.1" value="1">
+                                            <span id="sharpnessValue" class="badge bg-secondary">1.0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg" id="convertImageBtn">
+                                    <i class="bi bi-arrow-repeat me-2"></i> Convert Image
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2 text-warning"></i>
+                        Image Format Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-2">Best uses for each format:</h6>
+                            <ul class="mb-0">
+                                <li><strong>JPG</strong> - Photos and complex images with many colors</li>
+                                <li><strong>PNG</strong> - Images requiring transparency or lossless quality</li>
+                                <li><strong>WebP</strong> - Web graphics with smaller file size</li>
+                                <li><strong>GIF</strong> - Simple animations or images with few colors</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-2">Quality considerations:</h6>
+                            <ul class="mb-0">
+                                <li>Higher quality = larger file size</li>
+                                <li>JPEG and WebP support adjustable quality</li>
+                                <li>PNG and BMP are lossless formats</li>
+                                <li>WebP offers the best balance of quality and size</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .image-preview {
+        width: 80px;
+        height: 80px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    .image-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .dark-theme .image-preview {
+        background-color: var(--dark-input-bg);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const imageDimensions = document.getElementById('imageDimensions');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const conversionOptions = document.getElementById('conversionOptions');
+    const outputFormat = document.getElementById('outputFormat');
+    const qualityOption = document.getElementById('qualityOption');
+    const quality = document.getElementById('quality');
+    const qualityValue = document.getElementById('qualityValue');
+    const resizeToggle = document.getElementById('resizeToggle');
+    const resizeOptions = document.getElementById('resizeOptions');
+    const filterToggle = document.getElementById('filterToggle');
+    const filterOptions = document.getElementById('filterOptions');
+    const adjustmentsToggle = document.getElementById('adjustmentsToggle');
+    const adjustmentOptions = document.getElementById('adjustmentOptions');
+    const brightness = document.getElementById('brightness');
+    const brightnessValue = document.getElementById('brightnessValue');
+    const contrast = document.getElementById('contrast');
+    const contrastValue = document.getElementById('contrastValue');
+    const sharpness = document.getElementById('sharpness');
+    const sharpnessValue = document.getElementById('sharpnessValue');
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo();
+        }
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', updateFileInfo);
+    
+    // Update file info and preview
+    function updateFileInfo() {
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            
+            // Check if it's an image
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file.');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            // Create image preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Set preview image
+                imagePreview.src = e.target.result;
+                
+                // Get image dimensions
+                const img = new Image();
+                img.onload = function() {
+                    imageDimensions.textContent = `${this.width} × ${this.height}`;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            // Show file info and conversion options
+            fileInfo.classList.remove('d-none');
+            dropZone.classList.add('d-none');
+            conversionOptions.classList.remove('d-none');
+            
+            // Set default output format based on input format
+            const inputFormat = file.name.split('.').pop().toLowerCase();
+            if (inputFormat === 'jpg' || inputFormat === 'jpeg') {
+                outputFormat.value = 'png';
+            } else if (inputFormat === 'png') {
+                outputFormat.value = 'jpg';
+            } else if (inputFormat === 'webp') {
+                outputFormat.value = 'png';
+            } else {
+                outputFormat.value = 'jpg';
+            }
+            
+            // Update quality option visibility based on output format
+            updateQualityVisibility();
+        }
+    }
+    
+    // Remove file button
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.classList.add('d-none');
+        dropZone.classList.remove('d-none');
+        conversionOptions.classList.add('d-none');
+    });
+    
+    // Toggle resize options
+    resizeToggle.addEventListener('change', function() {
+        if (this.checked) {
+            resizeOptions.classList.remove('d-none');
+        } else {
+            resizeOptions.classList.add('d-none');
+        }
+    });
+    
+    // Toggle filter options
+    filterToggle.addEventListener('change', function() {
+        if (this.checked) {
+            filterOptions.classList.remove('d-none');
+        } else {
+            filterOptions.classList.add('d-none');
+        }
+    });
+    
+    // Toggle adjustment options
+    adjustmentsToggle.addEventListener('change', function() {
+        if (this.checked) {
+            adjustmentOptions.classList.remove('d-none');
+        } else {
+            adjustmentOptions.classList.add('d-none');
+        }
+    });
+    
+    // Update quality slider value display
+    quality.addEventListener('input', function() {
+        qualityValue.textContent = `${this.value}%`;
+    });
+    
+    // Update brightness slider value display
+    brightness.addEventListener('input', function() {
+        brightnessValue.textContent = this.value;
+    });
+    
+    // Update contrast slider value display
+    contrast.addEventListener('input', function() {
+        contrastValue.textContent = this.value;
+    });
+    
+    // Update sharpness slider value display
+    sharpness.addEventListener('input', function() {
+        sharpnessValue.textContent = this.value;
+    });
+    
+    // Update quality option visibility based on output format
+    outputFormat.addEventListener('change', updateQualityVisibility);
+    
+    function updateQualityVisibility() {
+        const format = outputFormat.value;
+        if (format === 'png' || format === 'bmp' || format === 'gif') {
+            qualityOption.classList.add('d-none');
+        } else {
+            qualityOption.classList.remove('d-none');
+        }
+    }
+    
+    // Form submission
+    document.getElementById('imageConvertForm').addEventListener('submit', function(e) {
+        // Show loading overlay
+        document.getElementById('loadingOverlay').classList.add('show');
+    });
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+});
+</script>
+{% endblock %}

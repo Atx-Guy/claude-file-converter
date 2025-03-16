@@ -1,0 +1,666 @@
+{% extends "base.html" %}
+
+{% block title %}Batch Processing{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="mb-3">Batch Processing</h1>
+                <p class="lead text-muted">Convert multiple files at once to save time</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="batchForm" action="/batch-process" method="post" enctype="multipart/form-data">
+                        <!-- Conversion Type Selection -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Step 1: Select Conversion Type</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check custom-card-check">
+                                        <input class="form-check-input visually-hidden" type="radio" name="conversion_type" id="imageConversion" value="image" checked>
+                                        <label class="form-check-label card-check-label" for="imageConversion">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <div class="conversion-icon mb-3">
+                                                        <i class="bi bi-image fs-1"></i>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Image Conversion</h5>
+                                                    <p class="card-text text-muted small">Convert between image formats</p>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-check custom-card-check">
+                                        <input class="form-check-input visually-hidden" type="radio" name="conversion_type" id="audioConversion" value="audio">
+                                        <label class="form-check-label card-check-label" for="audioConversion">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <div class="conversion-icon mb-3">
+                                                        <i class="bi bi-music-note-beamed fs-1"></i>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Audio Conversion</h5>
+                                                    <p class="card-text text-muted small">Convert between audio formats</p>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-check custom-card-check">
+                                        <input class="form-check-input visually-hidden" type="radio" name="conversion_type" id="documentConversion" value="document">
+                                        <label class="form-check-label card-check-label" for="documentConversion">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <div class="conversion-icon mb-3">
+                                                        <i class="bi bi-file-earmark-text fs-1"></i>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Document Conversion</h5>
+                                                    <p class="card-text text-muted small">Convert between document formats</p>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Format Selection -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Step 2: Select Output Format</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- Image Formats (initially visible) -->
+                                    <div id="imageFormats" class="format-options">
+                                        <select class="form-select" name="image_format">
+                                            <option value="jpg">JPG</option>
+                                            <option value="png">PNG</option>
+                                            <option value="webp">WebP</option>
+                                            <option value="gif">GIF</option>
+                                            <option value="bmp">BMP</option>
+                                        </select>
+                                        
+                                        <div class="mt-3">
+                                            <label class="form-label">Image Quality</label>
+                                            <input type="range" class="form-range" min="1" max="100" value="90" name="image_quality" id="imageQuality">
+                                            <div class="d-flex justify-content-between">
+                                                <span class="small text-muted">Lower</span>
+                                                <span class="small text-muted fw-medium">90%</span>
+                                                <span class="small text-muted">Higher</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-check mt-3">
+                                            <input class="form-check-input" type="checkbox" id="resizeImages" name="resize_images">
+                                            <label class="form-check-label" for="resizeImages">
+                                                Resize images
+                                            </label>
+                                        </div>
+                                        
+                                        <div id="resizeOptions" class="mt-2 ps-4 d-none">
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Width (px)</label>
+                                                    <input type="number" class="form-control form-control-sm" name="resize_width" placeholder="Auto">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Height (px)</label>
+                                                    <input type="number" class="form-control form-control-sm" name="resize_height" placeholder="Auto">
+                                                </div>
+                                            </div>
+                                            <div class="form-text mt-1">Leave empty to maintain aspect ratio</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Audio Formats (initially hidden) -->
+                                    <div id="audioFormats" class="format-options d-none">
+                                        <select class="form-select" name="audio_format">
+                                            <option value="mp3">MP3</option>
+                                            <option value="wav">WAV</option>
+                                            <option value="ogg">OGG</option>
+                                            <option value="flac">FLAC</option>
+                                            <option value="aac">AAC</option>
+                                        </select>
+                                        
+                                        <div class="mt-3">
+                                            <label class="form-label">Audio Bitrate</label>
+                                            <select class="form-select" name="audio_bitrate">
+                                                <option value="128">128 kbps</option>
+                                                <option value="192" selected>192 kbps</option>
+                                                <option value="256">256 kbps</option>
+                                                <option value="320">320 kbps</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Document Formats (initially hidden) -->
+                                    <div id="documentFormats" class="format-options d-none">
+                                        <select class="form-select" name="document_format">
+                                            <option value="pdf">PDF</option>
+                                            <option value="docx">DOCX</option>
+                                            <option value="txt">TXT</option>
+                                            <option value="html">HTML</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- File Upload Section -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Step 3: Upload Files</h5>
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-message">
+                                    <img src="/static/img/upload.png" alt="Upload" width="48" class="mb-3">
+                                    <p>Drag and drop your files here</p>
+                                    <span class="drop-subtitle">or</span>
+                                </div>
+                                
+                                <input type="file" id="fileInput" name="files[]" class="d-none" multiple>
+                                <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('fileInput').click()">
+                                    Choose Files
+                                </button>
+                            </div>
+                            
+                            <div id="fileList" class="mt-3 d-none">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Selected Files <span id="fileCount" class="badge bg-primary ms-2">0</span></h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="clearFiles">
+                                        <i class="bi bi-trash"></i> Clear All
+                                    </button>
+                                </div>
+                                <div class="card">
+                                    <ul class="list-group list-group-flush" id="fileListItems">
+                                        <!-- Files will be listed here -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Output Options -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Step 4: Output Options</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="outputPrefix" class="form-label">Filename Prefix (optional)</label>
+                                        <input type="text" id="outputPrefix" name="output_prefix" class="form-control" placeholder="converted_">
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="downloadAsZip" name="download_as_zip" checked>
+                                        <label class="form-check-label" for="downloadAsZip">
+                                            Download all files as ZIP archive
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg" id="startProcessingBtn">
+                                <i class="bi bi-play-circle me-2"></i> Start Batch Processing
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Batch Processing Progress -->
+            <div id="processingProgress" class="card mt-4 d-none">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">Processing Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Overall Progress</span>
+                            <span id="progressPercentage">0%</span>
+                        </div>
+                        <div class="progress">
+                            <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="currentFileInfo" class="alert alert-info">
+                        Processing <span id="currentFileNumber">0</span> of <span id="totalFiles">0</span>: <span id="currentFileName">...</span>
+                    </div>
+                    
+                    <div id="completedFiles" class="d-none">
+                        <h6 class="mb-2">Completed Files</h6>
+                        <div class="card">
+                            <ul class="list-group list-group-flush" id="completedFileList">
+                                <!-- Completed files will be listed here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <button type="button" class="btn btn-success" id="downloadResultsBtn" disabled>
+                        <i class="bi bi-download me-2"></i> Download Results
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conversion-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+    }
+    
+    .custom-card-check .card {
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-card-check input:checked + .card-check-label .card {
+        border-color: var(--primary-color);
+        background-color: rgba(79, 70, 229, 0.05);
+    }
+    
+    .format-options {
+        padding: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+    
+    #imageQuality {
+        max-width: 100%;
+    }
+    
+    #imageQuality::-webkit-slider-thumb {
+        background: var(--primary-color);
+    }
+    
+    #fileListItems .file-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    #fileListItems .file-icon {
+        margin-right: 12px;
+    }
+    
+    #fileListItems .file-info {
+        flex: 1;
+    }
+    
+    #fileListItems .file-name {
+        margin-bottom: 0.25rem;
+        word-break: break-all;
+    }
+    
+    #fileListItems .file-size {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    #completedFileList .completed-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    #completedFileList .status-icon {
+        margin-right: 12px;
+    }
+    
+    #completedFileList .completed-name {
+        flex: 1;
+        word-break: break-all;
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .conversion-icon {
+        color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .custom-card-check .card {
+        border-color: var(--dark-border-color);
+    }
+    
+    .dark-theme .custom-card-check input:checked + .card-check-label .card {
+        border-color: var(--dark-primary-color);
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+    
+    .dark-theme .format-options {
+        border-color: var(--dark-border-color);
+    }
+    
+    .dark-theme #imageQuality::-webkit-slider-thumb {
+        background: var(--dark-primary-color);
+    }
+    
+    .dark-theme #fileListItems .file-size {
+        color: var(--dark-text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const conversionTypeRadios = document.querySelectorAll('input[name="conversion_type"]');
+    const formatOptions = document.querySelectorAll('.format-options');
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileList = document.getElementById('fileList');
+    const fileListItems = document.getElementById('fileListItems');
+    const fileCount = document.getElementById('fileCount');
+    const clearFilesBtn = document.getElementById('clearFiles');
+    const resizeImagesCheck = document.getElementById('resizeImages');
+    const resizeOptions = document.getElementById('resizeOptions');
+    const imageQuality = document.getElementById('imageQuality');
+    const batchForm = document.getElementById('batchForm');
+    const processingProgress = document.getElementById('processingProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const currentFileNumber = document.getElementById('currentFileNumber');
+    const totalFiles = document.getElementById('totalFiles');
+    const currentFileName = document.getElementById('currentFileName');
+    const completedFiles = document.getElementById('completedFiles');
+    const completedFileList = document.getElementById('completedFileList');
+    const downloadResultsBtn = document.getElementById('downloadResultsBtn');
+    
+    // Conversion type selection
+    conversionTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Hide all format options
+            formatOptions.forEach(option => {
+                option.classList.add('d-none');
+            });
+            
+            // Show selected format options
+            const selectedOption = this.value;
+            document.getElementById(`${selectedOption}Formats`).classList.remove('d-none');
+            
+            // Reset file input when conversion type changes
+            fileInput.value = '';
+            updateFileList();
+        });
+    });
+    
+    // Resize images checkbox toggle
+    resizeImagesCheck.addEventListener('change', function() {
+        if (this.checked) {
+            resizeOptions.classList.remove('d-none');
+        } else {
+            resizeOptions.classList.add('d-none');
+        }
+    });
+    
+    // Update image quality display
+    imageQuality.addEventListener('input', function() {
+        this.nextElementSibling.querySelector('.fw-medium').textContent = `${this.value}%`;
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) {
+            updateFileList();
+        }
+    });
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileList();
+        }
+    });
+    
+    // Update file list UI
+    function updateFileList() {
+        const files = fileInput.files;
+        
+        if (files.length === 0) {
+            fileList.classList.add('d-none');
+            return;
+        }
+        
+        fileListItems.innerHTML = '';
+        fileCount.textContent = files.length;
+        
+        // Get selected conversion type
+        const conversionType = document.querySelector('input[name="conversion_type"]:checked').value;
+        
+        // Define allowed extensions based on conversion type
+        const allowedExtensions = {
+            'image': ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'],
+            'audio': ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'],
+            'document': ['pdf', 'docx', 'txt', 'md', 'html']
+        };
+        
+        let validFiles = 0;
+        
+        // Add files to list
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            const isValid = allowedExtensions[conversionType].includes(fileExt);
+            
+            if (isValid) validFiles++;
+            
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
+            
+            // Determine file icon based on type
+            let iconClass = 'bi-file';
+            if (conversionType === 'image') {
+                iconClass = 'bi-file-image';
+            } else if (conversionType === 'audio') {
+                iconClass = 'bi-file-music';
+            } else if (conversionType === 'document') {
+                iconClass = 'bi-file-text';
+            }
+            
+            listItem.innerHTML = `
+                <div class="file-item">
+                    <div class="file-icon">
+                        <i class="bi ${iconClass} fs-4 ${isValid ? 'text-success' : 'text-danger'}"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">
+                            ${formatFileSize(file.size)}
+                            ${!isValid ? '<span class="text-danger ms-2">Unsupported format</span>' : ''}
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-file" data-index="${i}">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            `;
+            
+            fileListItems.appendChild(listItem);
+        }
+        
+        // Show file list
+        fileList.classList.remove('d-none');
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-file').forEach(button => {
+            button.addEventListener('click', function() {
+                removeFile(parseInt(this.getAttribute('data-index')));
+            });
+        });
+        
+        // Add warning if no valid files
+        if (validFiles === 0 && files.length > 0) {
+            const warningItem = document.createElement('li');
+            warningItem.className = 'list-group-item text-center text-danger';
+            warningItem.innerHTML = 'No valid files for the selected conversion type!';
+            fileListItems.appendChild(warningItem);
+        }
+    }
+    
+    // Remove file function
+    function removeFile(index) {
+        const dt = new DataTransfer();
+        const files = fileInput.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) {
+                dt.items.add(files[i]);
+            }
+        }
+        
+        fileInput.files = dt.files;
+        updateFileList();
+    }
+    
+    // Clear all files
+    clearFilesBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        updateFileList();
+        fileList.classList.add('d-none');
+    });
+    
+    // Form submission - for demo purposes, we'll simulate the processing
+    batchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const files = fileInput.files;
+        if (files.length === 0) {
+            alert('Please select files to process.');
+            return;
+        }
+        
+        // Get selected conversion type
+        const conversionType = document.querySelector('input[name="conversion_type"]:checked').value;
+        
+        // Define allowed extensions based on conversion type
+        const allowedExtensions = {
+            'image': ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'],
+            'audio': ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'],
+            'document': ['pdf', 'docx', 'txt', 'md', 'html']
+        };
+        
+        // Filter valid files
+        let validFiles = [];
+        for (let i = 0; i < files.length; i++) {
+            const fileExt = files[i].name.split('.').pop().toLowerCase();
+            if (allowedExtensions[conversionType].includes(fileExt)) {
+                validFiles.push(files[i]);
+            }
+        }
+        
+        if (validFiles.length === 0) {
+            alert('No valid files for the selected conversion type.');
+            return;
+        }
+        
+        // Show processing progress
+        processingProgress.classList.remove('d-none');
+        totalFiles.textContent = validFiles.length;
+        
+        // Simulate processing
+        simulateBatchProcessing(validFiles);
+    });
+    
+    // Simulate batch processing
+    function simulateBatchProcessing(files) {
+        let processed = 0;
+        completedFileList.innerHTML = '';
+        
+        // Process each file with a delay to simulate real processing
+        function processNextFile() {
+            if (processed < files.length) {
+                const file = files[processed];
+                
+                // Update current file info
+                currentFileNumber.textContent = processed + 1;
+                currentFileName.textContent = file.name;
+                
+                // Simulate processing time
+                const processingTime = Math.random() * 1000 + 500; // 500ms to 1.5s
+                
+                setTimeout(() => {
+                    // Update progress
+                    processed++;
+                    const progress = Math.round((processed / files.length) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressPercentage.textContent = `${progress}%`;
+                    
+                    // Add to completed files
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item';
+                    listItem.innerHTML = `
+                        <div class="completed-item">
+                            <div class="status-icon text-success">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div class="completed-name">${file.name}</div>
+                        </div>
+                    `;
+                    completedFileList.appendChild(listItem);
+                    
+                    // Show completed files section
+                    completedFiles.classList.remove('d-none');
+                    
+                    // Process next file or finish
+                    if (processed < files.length) {
+                        processNextFile();
+                    } else {
+                        // All files processed
+                        currentFileInfo.classList.remove('alert-info');
+                        currentFileInfo.classList.add('alert-success');
+                        currentFileInfo.innerHTML = '<i class="bi bi-check-circle me-2"></i> All files processed successfully!';
+                        
+                        // Enable download button
+                        downloadResultsBtn.disabled = false;
+                    }
+                }, processingTime);
+            }
+        }
+        
+        // Start processing
+        processNextFile();
+    }
+    
+    // Download results button
+    downloadResultsBtn.addEventListener('click', function() {
+        alert('In a real implementation, this would download a ZIP file with all the processed files.');
+    });
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+});
+</script>
+{% endblock %}

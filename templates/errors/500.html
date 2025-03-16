@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="error-code">500</div>
+                <h1 class="error-title mb-4">Server Error</h1>
+                <p class="error-message mb-5">Sorry, something went wrong on our end. Our team has been notified and we're working to fix the issue.</p>
+                
+                <div class="error-actions">
+                    <a href="/" class="btn btn-primary me-3">
+                        <i class="bi bi-house-door me-2"></i> Go Home
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                        <i class="bi bi-arrow-clockwise me-2"></i> Try Again
+                    </button>
+                </div>
+                
+                <div class="error-details mt-5">
+                    <div class="card">
+                        <div class="card-body text-start">
+                            <h5 class="mb-3">What you can do:</h5>
+                            <ul class="mb-0">
+                                <li>Refresh the page and try again</li>
+                                <li>Try a different browser</li>
+                                <li>Clear your browser cache and cookies</li>
+                                <li>Try again later</li>
+                                <li>If the problem persists, please <a href="/contact">contact support</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+    }
+    
+    .error-code {
+        font-size: 8rem;
+        font-weight: 700;
+        color: #dc3545;
+        line-height: 1;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    
+    .error-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+    }
+    
+    .error-message {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .error-details {
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .error-details ul {
+        line-height: 1.8;
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .error-message {
+        color: var(--dark-text-secondary);
+    }
+</style>
+{% endblock %}

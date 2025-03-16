@@ -1,175 +1,206 @@
 {% extends "base.html" %}
 
-{% block title %}PDF Operations Dashboard{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <div class="container py-5">
-        <h1 class="dashboard-title mb-4">PDF Operations</h1>
-        <p class="dashboard-subtitle mb-5">Select an operation to transform your PDF files</p>
+<div class="dashboard-container py-5">
+    <div class="container">
+        <!-- Welcome Section -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <h1 class="mb-3">Welcome, {{ current_user.username }}!</h1>
+                <p class="lead text-muted">Your one-stop solution for all file conversion needs</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-value">{{ get_conversion_count() }}</div>
+                        <div class="stat-card-label">Total Conversions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            <!-- PDF Split Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/split.svg" alt="Split PDF" width="48">
-                        </div>
-                        <h5 class="card-title">Split PDF</h5>
-                        <p class="card-text">Extract specific pages or split a PDF into multiple files</p>
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">Quick Actions</h5>
                     </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.split_pdf') }}" class="btn btn-primary w-100">Select</a>
+                    <div class="card-body px-4 py-3">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-3">
+                                <a href="/" class="quick-action-btn">
+                                    <div class="quick-action-icon">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </div>
+                                    <span>Convert Files</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <a href="{{ url_for('pdf.pdf_operations') }}" class="quick-action-btn">
+                                    <div class="quick-action-icon">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </div>
+                                    <span>PDF Tools</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <a href="/batch" class="quick-action-btn">
+                                    <div class="quick-action-icon">
+                                        <i class="bi bi-collection"></i>
+                                    </div>
+                                    <span>Batch Processing</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <a href="{{ url_for('history') }}" class="quick-action-btn">
+                                    <div class="quick-action-icon">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                    <span>Conversion History</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tools Section -->
+        <h4 class="mb-3">Available Tools</h4>
+        
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-5">
+            <!-- File Conversion Card -->
+            <div class="col">
+                <div class="card h-100 tool-card">
+                    <div class="card-body">
+                        <div class="tool-icon">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </div>
+                        <h5 class="card-title">File Conversion</h5>
+                        <p class="card-text">Convert between different file formats easily</p>
+                        <div class="tool-actions">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="conversionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Select Conversion
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="conversionDropdown">
+                                    <li><a class="dropdown-item" href="/convert?type=audio">Audio Conversion</a></li>
+                                    <li><a class="dropdown-item" href="/convert?type=image">Image Conversion</a></li>
+                                    <li><a class="dropdown-item" href="/convert?type=document">Document Conversion</a></li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- PDF Merge Card -->
+            <!-- PDF Tools Card -->
             <div class="col">
-                <div class="card operation-card h-100">
+                <div class="card h-100 tool-card">
                     <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/merge.svg" alt="Merge PDFs" width="48">
+                        <div class="tool-icon">
+                            <i class="bi bi-file-earmark-pdf"></i>
                         </div>
-                        <h5 class="card-title">Merge PDFs</h5>
-                        <p class="card-text">Combine multiple PDF files into a single document</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.merge_pdfs') }}" class="btn btn-primary w-100">Select</a>
+                        <h5 class="card-title">PDF Tools</h5>
+                        <p class="card-text">Comprehensive toolkit for all your PDF needs</p>
+                        <div class="tool-actions">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="pdfToolsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Select Tool
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="pdfToolsDropdown">
+                                    <li><a class="dropdown-item" href="{{ url_for('pdf.split_pdf') }}">Split PDF</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('pdf.merge_pdfs') }}">Merge PDFs</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('pdf.compress_pdf') }}">Compress PDF</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('pdf.pdf_operations') }}">All PDF Tools</a></li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- PDF Compress Card -->
+            <!-- Batch Processing Card -->
             <div class="col">
-                <div class="card operation-card h-100">
+                <div class="card h-100 tool-card">
                     <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/compress.svg" alt="Compress PDF" width="48">
+                        <div class="tool-icon">
+                            <i class="bi bi-collection"></i>
                         </div>
-                        <h5 class="card-title">Compress PDF</h5>
-                        <p class="card-text">Reduce PDF file size while preserving quality</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.compress_pdf') }}" class="btn btn-primary w-100">Select</a>
+                        <h5 class="card-title">Batch Processing</h5>
+                        <p class="card-text">Process multiple files at once</p>
+                        <div class="tool-actions">
+                            <a href="/batch" class="btn btn-outline-primary">Start Batch Process</a>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- PDF to Images Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/pdf-to-image.svg" alt="PDF to Images" width="48">
-                        </div>
-                        <h5 class="card-title">PDF to Images</h5>
-                        <p class="card-text">Convert each page of a PDF to image format</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.pdf_to_images') }}" class="btn btn-primary w-100">Select</a>
+        </div>
+        
+        <!-- Recent Conversions Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Recent Conversions</h4>
+                    <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                
+                {% if recent_conversions %}
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Input File</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for conversion in recent_conversions %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="operation-icon me-3">
+                                                <i class="bi {{ conversion.icon_class }} fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ conversion.operation_display_name }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ conversion.input_filename }}</td>
+                                    <td>{{ conversion.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary repeat-conversion" 
+                                                data-operation="{{ conversion.operation }}" 
+                                                data-input="{{ conversion.input_filename }}"
+                                                data-output="{{ conversion.output_filename }}">
+                                            <i class="bi bi-arrow-repeat"></i> Repeat
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Images to PDF Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/image-to-pdf.svg" alt="Images to PDF" width="48">
-                        </div>
-                        <h5 class="card-title">Images to PDF</h5>
-                        <p class="card-text">Create a PDF from multiple image files</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.images_to_pdf') }}" class="btn btn-primary w-100">Select</a>
+                {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-clock-history display-1 text-muted mb-3"></i>
+                        <h3>No conversion history yet</h3>
+                        <p class="text-muted mb-4">Start converting files to see your history here</p>
+                        <a href="/" class="btn btn-primary">Start Converting</a>
                     </div>
                 </div>
+                {% endif %}
             </div>
-            
-            <!-- PDF Protect Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/protect.svg" alt="Protect PDF" width="48">
-                        </div>
-                        <h5 class="card-title">Protect PDF</h5>
-                        <p class="card-text">Add password protection to your PDF file</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.protect_pdf') }}" class="btn btn-primary w-100">Select</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- PDF Unlock Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/unlock.svg" alt="Unlock PDF" width="48">
-                        </div>
-                        <h5 class="card-title">Unlock PDF</h5>
-                        <p class="card-text">Remove password protection from a PDF file</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.unlock_pdf') }}" class="btn btn-primary w-100">Select</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- PDF Rotate Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/rotate.svg" alt="Rotate PDF" width="48">
-                        </div>
-                        <h5 class="card-title">Rotate PDF</h5>
-                        <p class="card-text">Rotate pages in your PDF document</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.rotate_pdf') }}" class="btn btn-primary w-100">Select</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- PDF Watermark Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/watermark.svg" alt="Add Watermark" width="48">
-                        </div>
-                        <h5 class="card-title">Add Watermark</h5>
-                        <p class="card-text">Add text watermark to PDF pages</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.watermark_pdf') }}" class="btn btn-primary w-100">Select</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- PDF OCR Card -->
-            <div class="col">
-                <div class="card operation-card h-100">
-                    <div class="card-body">
-                        <div class="operation-icon">
-                            <img src="/static/img/icons/ocr.svg" alt="OCR PDF" width="48">
-                        </div>
-                        <h5 class="card-title">OCR PDF</h5>
-                        <p class="card-text">Make scanned PDFs searchable with OCR</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ url_for('pdf.ocr_pdf') }}" class="btn btn-primary w-100">Select</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- More operations can be added here -->
         </div>
     </div>
 </div>
@@ -182,70 +213,139 @@
         min-height: calc(100vh - 70px);
     }
     
-    .dashboard-title {
+    .stat-cards {
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .stat-card {
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        min-width: 150px;
+    }
+    
+    .stat-card-value {
+        font-size: 28px;
         font-weight: 600;
-        color: var(--text-primary);
     }
     
-    .dashboard-subtitle {
-        color: var(--text-secondary);
-        max-width: 600px;
+    .stat-card-label {
+        font-size: 14px;
+        opacity: 0.9;
     }
     
-    .operation-card {
+    .tool-card {
         border-radius: 12px;
         transition: transform 0.2s, box-shadow 0.2s;
         border: 1px solid var(--border-color);
         overflow: hidden;
     }
     
-    .operation-card:hover {
+    .tool-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
     
-    .operation-icon {
-        display: flex;
-        justify-content: center;
+    .tool-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
         margin-bottom: 1rem;
     }
     
-    .card-title {
-        font-weight: 600;
-        text-align: center;
+    .tool-actions {
+        margin-top: 1.5rem;
     }
     
-    .card-text {
-        color: var(--text-secondary);
+    .quick-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
-    }
-    
-    .card-footer {
-        background-color: transparent;
-        border-top: none;
         padding: 1rem;
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: background-color 0.2s;
     }
     
-    /* Dark theme support */
+    .quick-action-btn:hover {
+        background-color: rgba(79, 70, 229, 0.05);
+        color: var(--primary-color);
+    }
+    
+    .quick-action-icon {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .operation-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background-color: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+    }
+    
+    /* Dark theme adjustments */
     .dark-theme .dashboard-container {
         background-color: var(--dark-bg);
     }
     
-    .dark-theme .dashboard-title {
-        color: var(--dark-text-primary);
+    .dark-theme .stat-card {
+        background-color: var(--dark-primary-color);
     }
     
-    .dark-theme .dashboard-subtitle {
-        color: var(--dark-text-secondary);
+    .dark-theme .tool-icon {
+        color: var(--dark-primary-color);
     }
     
-    .dark-theme .operation-card {
-        background-color: var(--dark-card-bg);
-        border-color: var(--dark-border-color);
+    .dark-theme .quick-action-btn:hover {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: var(--dark-primary-color);
     }
     
-    .dark-theme .card-text {
-        color: var(--dark-text-secondary);
+    .dark-theme .quick-action-icon {
+        color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .operation-icon {
+        background-color: rgba(99, 102, 241, 0.2);
+        color: var(--dark-primary-color);
     }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle repeat conversion buttons
+    const repeatButtons = document.querySelectorAll('.repeat-conversion');
+    repeatButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const operation = this.getAttribute('data-operation');
+            const inputFile = this.getAttribute('data-input');
+            const outputFile = this.getAttribute('data-output');
+            
+            // Redirect to appropriate conversion page based on operation
+            let redirectUrl = '/';
+            
+            if (operation.startsWith('pdf_')) {
+                redirectUrl = `/pdf/${operation.replace('pdf_', '')}`;
+            } else if (operation.startsWith('convert_')) {
+                const type = operation.replace('convert_', '');
+                redirectUrl = `/convert?type=${type}`;
+            }
+            
+            window.location.href = redirectUrl;
+        });
+    });
+});
+</script>
 {% endblock %}

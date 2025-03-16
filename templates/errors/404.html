@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="error-code">404</div>
+                <h1 class="error-title mb-4">Page Not Found</h1>
+                <p class="error-message mb-5">Oops! The page you're looking for doesn't exist or might have been moved.</p>
+                
+                <div class="error-actions">
+                    <a href="/" class="btn btn-primary me-3">
+                        <i class="bi bi-house-door me-2"></i> Go Home
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="window.history.back()">
+                        <i class="bi bi-arrow-left me-2"></i> Go Back
+                    </button>
+                </div>
+                
+                <div class="error-suggestions mt-5">
+                    <h5 class="mb-3">You might want to try:</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="suggestion-link">Convert files</a></li>
+                        <li><a href="{{ url_for('pdf.pdf_operations') }}" class="suggestion-link">PDF Tools</a></li>
+                        <li><a href="/batch" class="suggestion-link">Batch Processing</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+    }
+    
+    .error-code {
+        font-size: 8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        line-height: 1;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    
+    .error-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+    }
+    
+    .error-message {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .error-suggestions {
+        margin-top: 3rem;
+    }
+    
+    .suggestion-link {
+        color: var(--text-primary);
+        text-decoration: none;
+        padding: 0.5rem 0;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+    
+    .suggestion-link:hover {
+        color: var(--primary-color);
+        transform: translateX(5px);
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .error-code {
+        color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .error-message {
+        color: var(--dark-text-secondary);
+    }
+    
+    .dark-theme .suggestion-link {
+        color: var(--dark-text-primary);
+    }
+    
+    .dark-theme .suggestion-link:hover {
+        color: var(--dark-primary-color);
+    }
+</style>
+{% endblock %}
