@@ -5,6 +5,7 @@ from flask import Blueprint, request, render_template, send_file, jsonify, curre
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from services.pdf_service import PDFService
+from models import db
 from models.conversion import Conversion
 from utils.file_utils import allowed_file, get_file_extension
 import io
