@@ -16,6 +16,17 @@ body {
     line-height: 1.5;
 }
 
+.hero-section {
+    position: relative;
+}
+
+.hero-image {
+    position: relative;
+    top: 155px;  /* Adjust this value */
+    left: -50px; /* Move left (negative value) */
+    animation: float 2s ease-in-out infinite;
+}
+
 /* Navbar styling */
 .navbar {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -265,3 +276,5 @@ body {
         left: calc(50% + 1rem);
     }
 }
+
+    

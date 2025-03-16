@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="85.333336"
+   viewBox="0 0 85.333336 85.333336"
+   width="85.333336"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="hero-image.svg"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="9.082031"
+     inkscape:cx="42.666668"
+     inkscape:cy="42.666668"
+     inkscape:window-width="1920"
+     inkscape:window-height="977"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g5" />
+  <g
+     transform="matrix(.13333333 0 0 -.13333333 0 85.333333)"
+     id="g5">
+    <path
+       d="M 0,320 C 0,496.73 143.27,640 320,640 496.73,640 640,496.73 640,320 640,143.27 496.73,0 320,0 143.27,0 0,143.27 0,320"
+       fill="#77caa9"
+       id="path1"
+       style="fill:#6366f1;fill-opacity:1"
+       sodipodi:nodetypes="csssc" />
+    <path
+       d="m 320,100 c -11.816,0 -23.629,5.699 -32.594,17.098 L 144.711,298.555 C 126.785,321.352 134.391,340 161.613,340 H 240 v 120 c 0,22.094 17.906,40 40,40 h 80 c 22.094,0 40,-17.906 40,-40 V 340 h 78.387 c 27.222,0 34.828,-18.648 16.898,-41.445 L 445.17466,234.83079 352.594,117.098 C 343.629,105.699 331.816,100 320,100"
+       fill="#62a48d"
+       id="path2"
+       style="fill:#818cf8;fill-opacity:1"
+       sodipodi:nodetypes="cccscsssscscccc" />
+    <g
+       fill="#fff"
+       id="g4">
+      <path
+         d="m240 480c0 22.09 17.91 40 40 40h80c22.09 0 40-17.91 40-40v-240c0-22.09-17.91-40-40-40h-80c-22.09 0-40 17.91-40 40z"
+         id="path3" />
+      <path
+         d="m478.387 360c27.222 0 34.828-18.652 16.902-41.445l-142.695-181.457c-17.926-22.797-47.262-22.797-65.188 0l-142.695 181.457c-17.926 22.793-10.32 41.445 16.902 41.445z"
+         id="path4" />
+    </g>
+  </g>
+</svg>
