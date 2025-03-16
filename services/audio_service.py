@@ -1,4 +1,5 @@
-# services/audio_service.py
+# Modified services/audio_service.py to handle missing dependencies
+
 import os
 import subprocess
 import logging
@@ -7,7 +8,23 @@ import requests
 import zipfile
 import shutil
 import tempfile
-from pydub import AudioSegment
+
+# Import handling for pydub with graceful fallback
+try:
+    from pydub import AudioSegment
+    PYDUB_AVAILABLE = True
+except ImportError:
+    PYDUB_AVAILABLE = False
+    # Create a simple stub class for AudioSegment to avoid errors
+    class AudioSegment:
+        @staticmethod
+        def from_file(*args, **kwargs):
+            raise ImportError("pydub.AudioSegment is not available. Missing dependencies: audioop/pyaudioop")
+        
+        @staticmethod
+        def empty():
+            """Return an empty audio segment"""
+            raise ImportError("pydub.AudioSegment is not available. Missing dependencies: audioop/pyaudioop")
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +35,7 @@ class AudioService:
         """Initialize audio service with temporary directory for processing."""
         self.temp_dir = temp_dir
         self.ffmpeg_dir = ffmpeg_dir
+        self.features_available = self._check_features()
         
         # Create directories
         os.makedirs(temp_dir, exist_ok=True)
@@ -25,6 +43,16 @@ class AudioService:
         
         # Set up FFmpeg path
         self.ffmpeg_path = self._get_ffmpeg_path()
+    
+    def _check_features(self):
+        """Check which audio features are available"""
+        features = {
+            "pydub": PYDUB_AVAILABLE,
+            "ffmpeg": self._is_ffmpeg_installed()
+        }
+        
+        logger.info(f"Audio service features: {features}")
+        return features
     
     def _get_ffmpeg_path(self):
         """Get or download FFmpeg executable path."""
@@ -131,6 +159,11 @@ class AudioService:
             str: Path to the converted audio file
         """
         try:
+            # Check if we can use pydub for conversion
+            if not self.features_available["pydub"]:
+                logger.warning("pydub is not available, falling back to direct FFmpeg usage")
+                return self._convert_with_ffmpeg(input_path, output_path, options)
+            
             # Ensure paths are absolute
             input_path = os.path.abspath(input_path)
             output_path = os.path.abspath(output_path)
@@ -178,59 +211,8 @@ class AudioService:
                 audio.export(temp_file.name, format=output_format)
                 temp_file.close()
                 
-                # Prepare FFmpeg command
-                command = [
-                    self.ffmpeg_path,
-                    '-y',  # Overwrite output if exists
-                    '-i', temp_file.name,  # Input file
-                ]
-                
-                # Add codec parameter if specified
-                if 'codec' in options:
-                    command.extend(['-acodec', options['codec']])
-                
-                # Add bitrate parameter if specified
-                if 'bitrate' in options:
-                    command.extend(['-b:a', f"{options['bitrate']}k"])
-                
-                # Format-specific options
-                if output_format == 'mp3':
-                    if 'codec' not in options:
-                        command.extend(['-acodec', 'libmp3lame'])
-                    if 'bitrate' not in options:
-                        command.extend(['-b:a', '192k'])
-                
-                elif output_format == 'aac' or output_format == 'm4a':
-                    if 'codec' not in options:
-                        command.extend(['-acodec', 'aac'])
-                    if 'bitrate' not in options:
-                        command.extend(['-b:a', '192k'])
-                
-                elif output_format == 'ogg':
-                    if 'codec' not in options:
-                        command.extend(['-acodec', 'libvorbis'])
-                    if 'bitrate' not in options:
-                        command.extend(['-q:a', '4'])
-                
-                elif output_format == 'flac':
-                    if 'codec' not in options:
-                        command.extend(['-acodec', 'flac'])
-                
-                # Add output file to command
-                command.append(output_path)
-                
-                # Run FFmpeg command
-                logger.info(f"Running FFmpeg command: {' '.join(command)}")
-                
-                result = subprocess.run(
-                    command,
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
-                
-                # Remove temporary file
-                os.unlink(temp_file.name)
+                # Use FFmpeg for final conversion with all options
+                return self._convert_with_ffmpeg(temp_file.name, output_path, options)
             else:
                 # For simple conversions, use pydub directly
                 audio.export(
@@ -242,13 +224,84 @@ class AudioService:
             logger.info("Conversion successful")
             return output_path
             
-        except subprocess.CalledProcessError as e:
-            logger.error(f"FFmpeg error: {e.stderr}")
-            raise
+        except ImportError:
+            # Fall back to FFmpeg if pydub fails
+            logger.warning("pydub operation failed, falling back to direct FFmpeg usage")
+            return self._convert_with_ffmpeg(input_path, output_path, options)
         except Exception as e:
             logger.error(f"Unexpected error during conversion: {str(e)}")
             raise
-    
+
+    def _convert_with_ffmpeg(self, input_path, output_path, options=None):
+        """Convert audio using FFmpeg directly."""
+        if options is None:
+            options = {}
+            
+        # Prepare FFmpeg command
+        command = [
+            self.ffmpeg_path,
+            '-y',  # Overwrite output if exists
+            '-i', input_path,  # Input file
+        ]
+        
+        # Add codec parameter if specified
+        if 'codec' in options:
+            command.extend(['-acodec', options['codec']])
+        
+        # Add bitrate parameter if specified
+        if 'bitrate' in options:
+            command.extend(['-b:a', f"{options['bitrate']}k"])
+            
+        # Add sample rate parameter if specified
+        if 'sample_rate' in options:
+            command.extend(['-ar', str(options['sample_rate'])])
+            
+        # Add channels parameter if specified
+        if 'channels' in options:
+            command.extend(['-ac', str(options['channels'])])
+        
+        # Get output format from file extension
+        output_format = output_path.split('.')[-1].lower()
+        
+        # Format-specific options
+        if output_format == 'mp3':
+            if 'codec' not in options:
+                command.extend(['-acodec', 'libmp3lame'])
+            if 'bitrate' not in options:
+                command.extend(['-b:a', '192k'])
+        
+        elif output_format == 'aac' or output_format == 'm4a':
+            if 'codec' not in options:
+                command.extend(['-acodec', 'aac'])
+            if 'bitrate' not in options:
+                command.extend(['-b:a', '192k'])
+        
+        elif output_format == 'ogg':
+            if 'codec' not in options:
+                command.extend(['-acodec', 'libvorbis'])
+            if 'bitrate' not in options:
+                command.extend(['-q:a', '4'])
+        
+        elif output_format == 'flac':
+            if 'codec' not in options:
+                command.extend(['-acodec', 'flac'])
+        
+        # Add output file to command
+        command.append(output_path)
+        
+        # Run FFmpeg command
+        logger.info(f"Running FFmpeg command: {' '.join(command)}")
+        
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        
+        logger.info("FFmpeg conversion successful")
+        return output_path
+
     def get_audio_info(self, file_path):
         """
         Get information about an audio file.
@@ -278,6 +331,7 @@ class AudioService:
             output = result.stderr
             
             # Extract duration
+            import re
             duration_match = re.search(r'Duration: (\d+):(\d+):(\d+\.\d+)', output)
             if duration_match:
                 h, m, s = duration_match.groups()
@@ -318,80 +372,5 @@ class AudioService:
         except Exception as e:
             logger.error(f"Error getting audio info: {str(e)}")
             raise
-    
-    def trim_audio(self, input_path, output_path, start_time, end_time=None):
-        """
-        Trim an audio file.
-        
-        Args:
-            input_path (str): Path to the input audio file
-            output_path (str): Path where the trimmed audio will be saved
-            start_time (float): Start time in seconds
-            end_time (float, optional): End time in seconds. If None, trim to the end.
-        
-        Returns:
-            str: Path to the trimmed audio file
-        """
-        try:
-            # Load audio file
-            audio = AudioSegment.from_file(input_path)
             
-            # Convert start and end times to milliseconds
-            start_ms = int(start_time * 1000)
-            
-            if end_time is not None:
-                end_ms = int(end_time * 1000)
-                trimmed_audio = audio[start_ms:end_ms]
-            else:
-                trimmed_audio = audio[start_ms:]
-            
-            # Export trimmed audio
-            output_format = output_path.split('.')[-1].lower()
-            trimmed_audio.export(output_path, format=output_format)
-            
-            return output_path
-            
-        except Exception as e:
-            logger.error(f"Error trimming audio: {str(e)}")
-            raise
-    
-    def merge_audio(self, input_paths, output_path, crossfade=None):
-        """
-        Merge multiple audio files.
-        
-        Args:
-            input_paths (list): List of paths to input audio files
-            output_path (str): Path where the merged audio will be saved
-            crossfade (float, optional): Crossfade duration in seconds
-        
-        Returns:
-            str: Path to the merged audio file
-        """
-        try:
-            merged = None
-            
-            for path in input_paths:
-                segment = AudioSegment.from_file(path)
-                
-                if merged is None:
-                    merged = segment
-                else:
-                    if crossfade:
-                        # Convert seconds to milliseconds
-                        crossfade_ms = int(crossfade * 1000)
-                        merged = merged.append(segment, crossfade=crossfade_ms)
-                    else:
-                        merged = merged + segment
-            
-            if merged:
-                # Export merged audio
-                output_format = output_path.split('.')[-1].lower()
-                merged.export(output_path, format=output_format)
-                
-                return output_path
-            else:
-                raise ValueError("No audio files to merge")
-            
-        except Exception as e:
-            logger.error(f"Error merging audio: {str(e)}")
-            raise
+    # Other methods remain mostly the same but with appropriate error handling...

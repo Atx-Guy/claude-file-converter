@@ -1,19 +1,13 @@
-# app.py
+# Modified app.py with proper error handling for missing dependencies
 import os
-import subprocess
 import logging
-import mimetypes
 import traceback
-import io
+import mimetypes
 from flask import Flask, request, render_template, send_file, jsonify, redirect, url_for, make_response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from models import db, User
 from models.conversion import Conversion
-from services.audio_service import AudioService
-from services.image_service import ImageService
-from services.document_service import DocumentService
-from services.pdf_service import PDFService
 from routes.pdf_routes import pdf_bp
 from routes.auth_routes import auth_bp
 from routes.conversion_routes import conversion_bp
@@ -39,11 +33,67 @@ login_manager.login_view = 'auth.login'
 # Configure database
 db.init_app(app)
 
-# Initialize services
-audio_service = AudioService()
-image_service = ImageService()
-document_service = DocumentService()
-pdf_service = PDFService()
+# Initialize services with proper error handling
+try:
+    from services.audio_service import AudioService
+    audio_service = AudioService()
+    logger.info("Audio service initialized successfully")
+except ImportError as e:
+    logger.warning(f"Audio service initialization error: {str(e)}")
+    logger.warning("Audio conversion features will be limited")
+    # Create a stub AudioService class
+    class AudioService:
+        def convert_audio(self, *args, **kwargs):
+            raise ImportError("Audio conversion is not available due to missing dependencies")
+    audio_service = AudioService()
+
+try:
+    from services.image_service import ImageService
+    image_service = ImageService()
+    logger.info("Image service initialized successfully")
+except ImportError as e:
+    logger.warning(f"Image service initialization error: {str(e)}")
+    logger.warning("Image conversion features will be limited")
+    # Create a stub ImageService class
+    class ImageService:
+        def convert_image(self, *args, **kwargs):
+            raise ImportError("Image conversion is not available due to missing dependencies")
+    image_service = ImageService()
+
+try:
+    from services.document_service import DocumentService
+    document_service = DocumentService()
+    logger.info("Document service initialized successfully")
+except ImportError as e:
+    logger.warning(f"Document service initialization error: {str(e)}")
+    logger.warning("Document conversion features will be limited")
+    # Create a stub DocumentService class
+    class DocumentService:
+        def convert_document(self, *args, **kwargs):
+            raise ImportError("Document conversion is not available due to missing dependencies")
+    document_service = DocumentService()
+
+try:
+    from services.pdf_service import PDFService
+    pdf_service = PDFService()
+    logger.info("PDF service initialized successfully")
+except ImportError as e:
+    logger.warning(f"PDF service initialization error: {str(e)}")
+    logger.warning("PDF conversion features will be limited")
+    # Create a stub PDFService class
+    class PDFService:
+        def __init__(self, temp_dir='temp'):
+            self.temp_dir = temp_dir
+            os.makedirs(temp_dir, exist_ok=True)
+            
+        def split_pdf(self, *args, **kwargs):
+            raise ImportError("PDF splitting is not available due to missing dependencies")
+        
+        def merge_pdfs(self, *args, **kwargs):
+            raise ImportError("PDF merging is not available due to missing dependencies")
+            
+        # Add stubs for other PDF methods as needed
+    pdf_service = PDFService()
 
 # Detect available features
 available_features = {
@@ -86,7 +136,14 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    # Get recent conversions for dashboard
+    recent_conversions = []
+    if current_user.is_authenticated:
+        recent_conversions = Conversion.query.filter_by(user_id=current_user.id)\
+                                           .order_by(Conversion.created_at.desc())\
+                                           .limit(5)\
+                                           .all()
+    return render_template('dashboard.html', recent_conversions=recent_conversions)
 
 @app.route('/history')
 @login_required
@@ -148,23 +205,28 @@ def convert_file_route():
         # Determine file type and use appropriate service
         file_type = determine_file_type(input_format, output_format)
         
-        if file_type == 'audio':
-            # Convert audio file
-            logger.info(f"Converting audio from {input_format} to {output_format}")
-            audio_service.convert_audio(input_path, output_path)
-            operation = 'convert_audio'
-        elif file_type == 'image':
-            # Convert image file
-            logger.info(f"Converting image from {input_format} to {output_format}")
-            image_service.convert_image(input_path, output_path)
-            operation = 'convert_image'
-        elif file_type == 'document':
-            # Convert document
-            logger.info(f"Converting document from {input_format} to {output_format}")
-            document_service.convert_document(input_path, output_path)
-            operation = 'convert_document'
-        else:
-            return jsonify({'error': 'Unsupported conversion'}), 400
+        try:
+            if file_type == 'audio':
+                # Convert audio file
+                logger.info(f"Converting audio from {input_format} to {output_format}")
+                audio_service.convert_audio(input_path, output_path)
+                operation = 'convert_audio'
+            elif file_type == 'image':
+                # Convert image file
+                logger.info(f"Converting image from {input_format} to {output_format}")
+                image_service.convert_image(input_path, output_path)
+                operation = 'convert_image'
+            elif file_type == 'document':
+                # Convert document
+                logger.info(f"Converting document from {input_format} to {output_format}")
+                document_service.convert_document(input_path, output_path)
+                operation = 'convert_document'
+            else:
+                return jsonify({'error': 'Unsupported conversion'}), 400
+        except ImportError as e:
+            # Handle missing dependencies errors
+            logger.error(f"Conversion error (missing dependencies): {str(e)}")
+            return jsonify({'error': f'This conversion is not available: {str(e)}'}), 500
         
         # Record conversion for logged in users
         if current_user.is_authenticated:

@@ -90,13 +90,13 @@
                                         <li><a class="dropdown-item" href="/profile">Profile</a></li>
                                         <li><a class="dropdown-item" href="/history">Conversion History</a></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
                                     </ul>
                                 </div>
                             </div>
                         {% else %}
-                            <a href="{{ url_for('login') }}" class="btn btn-outline-primary">Sign In</a>
-                            <a href="{{ url_for('signup') }}" class="btn btn-primary d-none d-md-block">Sign Up</a>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Sign In</a>
+                            <a href="{{ url_for('auth.signup') }}" class="btn btn-primary d-none d-md-block">Sign Up</a>
                         {% endif %}
                     </div>
                 </div>
