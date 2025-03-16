@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}Merge PDFs{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="mb-3">Merge PDFs</h1>
+                <p class="lead text-muted">Combine multiple PDF files into a single document</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="pdfMergeForm" action="{{ url_for('pdf.merge_pdfs') }}" method="post" enctype="multipart/form-data">
+                        <!-- File Upload Section -->
+                        <div class="upload-section mb-4">
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-message">
+                                    <img src="/static/img/icons/pdf-stack.svg" alt="PDF Stack" width="48" class="mb-3">
+                                    <p>Drag and drop your PDF files here</p>
+                                    <span class="drop-subtitle">or</span>
+                                </div>
+                                
+                                <input type="file" id="fileInput" name="files[]" class="d-none" accept=".pdf" multiple>
+                                <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('fileInput').click()">
+                                    Choose PDF Files
+                                </button>
+                            </div>
+                            
+                            <div id="filesContainer" class="d-none">
+                                <h5 class="mb-3">Selected Files <span id="fileCount" class="badge bg-primary ms-2">0</span></h5>
+                                <div class="card">
+                                    <ul id="fileList" class="list-group list-group-flush pdf-file-list">
+                                        <!-- Files will be added here dynamically -->
+                                    </ul>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="button" class="btn btn-outline-primary me-2" id="addMoreBtn">
+                                        <i class="bi bi-plus-lg"></i> Add More Files
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" id="clearFilesBtn">
+                                        <i class="bi bi-trash"></i> Clear All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Merge Options Section -->
+                        <div id="mergeOptions" class="d-none">
+                            <hr class="my-4">
+                            
+                            <h5 class="mb-3">Merge Options</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">File Order</label>
+                                <p class="text-muted small mb-2">Drag and drop files to reorder them. Files will be merged in the order shown below.</p>
+                                <div class="card p-2">
+                                    <ul id="sortableFiles" class="list-group sortable-list">
+                                        <!-- Files for sorting will be added here dynamically -->
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="outputFilename" class="form-label">Output Filename</label>
+                                <input type="text" id="outputFilename" name="output_filename" class="form-control" placeholder="merged_document">
+                                <div class="form-text">The extension (.pdf) will be added automatically</div>
+                            </div>
+                            
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="addBookmarks" name="add_bookmarks" checked>
+                                <label class="form-check-label" for="addBookmarks">
+                                    Add bookmarks for each merged document
+                                </label>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg" id="mergePdfBtn">
+                                    <i class="bi bi-front me-2"></i> Merge PDFs
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2 text-warning"></i>
+                        Tips for Merging PDFs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li class="mb-2">You can select multiple files at once using Ctrl+Click or Shift+Click</li>
+                        <li class="mb-2">Drag and drop files to change their order in the merged document</li>
+                        <li class="mb-2">Large PDFs might take longer to process</li>
+                        <li>Adding bookmarks helps navigate through the merged document</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pdf-file-list .file-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .pdf-file-list .file-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+    }
+    
+    .pdf-file-list .file-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .pdf-file-list .file-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .pdf-file-list .file-meta {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .sortable-list {
+        min-height: 20px;
+    }
+    
+    .sortable-list .list-group-item {
+        cursor: move;
+        border-left: 4px solid transparent;
+    }
+    
+    .sortable-list .list-group-item:hover {
+        background-color: rgba(79, 70, 229, 0.05);
+        border-left-color: var(--primary-color);
+    }
+    
+    .sortable-list .list-group-item .handle {
+        cursor: grab;
+        color: var(--text-secondary);
+        margin-right: 10px;
+    }
+    
+    .sortable-list .list-group-item.sortable-ghost {
+        background-color: rgba(79, 70, 229, 0.1);
+        border-left-color: var(--primary-color);
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .pdf-file-list .file-meta {
+        color: var(--dark-text-secondary);
+    }
+    
+    .dark-theme .sortable-list .list-group-item:hover {
+        background-color: rgba(99, 102, 241, 0.1);
+        border-left-color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .sortable-list .list-group-item .handle {
+        color: var(--dark-text-secondary);
+    }
+    
+    .dark-theme .sortable-list .list-group-item.sortable-ghost {
+        background-color: rgba(99, 102, 241, 0.2);
+        border-left-color: var(--dark-primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const filesContainer = document.getElementById('filesContainer');
+    const fileList = document.getElementById('fileList');
+    const sortableFiles = document.getElementById('sortableFiles');
+    const fileCount = document.getElementById('fileCount');
+    const addMoreBtn = document.getElementById('addMoreBtn');
+    const clearFilesBtn = document.getElementById('clearFilesBtn');
+    const mergeOptions = document.getElementById('mergeOptions');
+    const pdfMergeForm = document.getElementById('pdfMergeForm');
+    
+    // File counter
+    let selectedFiles = [];
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) {
+            handleFiles(this.files);
+        }
+    });
+    
+    // Handle selected files
+    function handleFiles(files) {
+        let validFiles = [];
+        
+        // Filter for PDF files
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type === 'application/pdf') {
+                validFiles.push(file);
+            }
+        }
+        
+        if (validFiles.length === 0) {
+            alert('Please select valid PDF files.');
+            return;
+        }
+        
+        // Add valid files to the selectedFiles array
+        selectedFiles = selectedFiles.concat(Array.from(validFiles));
+        
+        // Update UI with selected files
+        updateFileList();
+    }
+    
+    // Update file list UI
+    function updateFileList() {
+        // Clear current lists
+        fileList.innerHTML = '';
+        sortableFiles.innerHTML = '';
+        
+        // Update file count
+        fileCount.textContent = selectedFiles.length;
+        
+        // Populate file lists
+        selectedFiles.forEach((file, index) => {
+            // Add to file list
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
+            listItem.innerHTML = `
+                <div class="file-item">
+                    <div class="file-icon">
+                        <i class="bi bi-file-earmark-pdf fs-4 text-danger"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-file" data-index="${index}">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            `;
+            fileList.appendChild(listItem);
+            
+            // Add to sortable list
+            const sortableItem = document.createElement('li');
+            sortableItem.className = 'list-group-item';
+            sortableItem.setAttribute('data-id', index);
+            sortableItem.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <span class="handle"><i class="bi bi-grip-vertical"></i></span>
+                    <div class="ms-2">
+                        <div class="fw-medium">${file.name}</div>
+                        <div class="small text-muted">${formatFileSize(file.size)}</div>
+                    </div>
+                </div>
+            `;
+            sortableFiles.appendChild(sortableItem);
+        });
+        
+        // Show containers if files selected
+        if (selectedFiles.length > 0) {
+            filesContainer.classList.remove('d-none');
+            dropZone.classList.add('d-none');
+            mergeOptions.classList.remove('d-none');
+            
+            // Set default output filename
+            if (!document.getElementById('outputFilename').value) {
+                document.getElementById('outputFilename').value = 'merged_document';
+            }
+        } else {
+            filesContainer.classList.add('d-none');
+            dropZone.classList.remove('d-none');
+            mergeOptions.classList.add('d-none');
+        }
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-file').forEach(button => {
+            button.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                removeFile(index);
+            });
+        });
+    }
+    
+    // Remove file function
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        updateFileList();
+    }
+    
+    // Add more files button
+    addMoreBtn.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // Clear all files button
+    clearFilesBtn.addEventListener('click', function() {
+        selectedFiles = [];
+        updateFileList();
+    });
+    
+    // Initialize sortable list
+    new Sortable(sortableFiles, {
+        animation: 150,
+        handle: '.handle',
+        ghostClass: 'sortable-ghost',
+        onEnd: function(evt) {
+            // Reorder the selectedFiles array based on the new sort order
+            const newOrder = Array.from(sortableFiles.children).map(item => 
+                parseInt(item.getAttribute('data-id'))
+            );
+            
+            const reorderedFiles = [];
+            newOrder.forEach(oldIndex => {
+                reorderedFiles.push(selectedFiles[oldIndex]);
+            });
+            
+            selectedFiles = reorderedFiles;
+            updateFileList();
+        }
+    });
+    
+    // Form submission
+    pdfMergeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (selectedFiles.length < 2) {
+            alert('Please select at least two PDF files to merge.');
+            return;
+        }
+        
+        // Create a FormData object
+        const formData = new FormData();
+        
+        // Add selected files to FormData
+        selectedFiles.forEach(file => {
+            formData.append('files[]', file);
+        });
+        
+        // Add other form fields
+        formData.append('output_filename', document.getElementById('outputFilename').value || 'merged_document');
+        formData.append('add_bookmarks', document.getElementById('addBookmarks').checked ? 'true' : 'false');
+        
+        // Show loading overlay
+        document.getElementById('loadingOverlay').classList.add('show');
+        
+        // Submit form using fetch
+        fetch(pdfMergeForm.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Merge operation failed');
+                });
+            }
+            
+            // Get filename from Content-Disposition header if available
+            const contentDisposition = response.headers.get('content-disposition');
+            let filename = 'merged.pdf';
+            
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            // Convert response to blob
+            return response.blob().then(blob => {
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        })
+        .catch(error => {
+            alert(error.message || 'An error occurred during the merge operation');
+        })
+        .finally(() => {
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').classList.remove('show');
+        });
+    });
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+});
+</script>
+{% endblock %}
