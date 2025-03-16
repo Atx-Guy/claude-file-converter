@@ -213,3 +213,25 @@
     border: 5px solid var(--dark-border-color);
     border-top: 5px solid var(--dark-primary-color);
 }
+
+/* Dark theme adjustments */
+.dark-theme .document-preview {
+    color: var(--dark-primary-color);
+}
+
+.dark-theme .format-options {
+    background-color: var(--dark-input-bg);
+}
+
+.dark-theme .table {
+    color: var(--dark-text-primary);
+}
+
+.dark-theme .table-bordered {
+    border-color: var(--dark-border-color);
+}
+
+.dark-theme .table th,
+.dark-theme .table td {
+    border-color: var(--dark-border-color);
+}
