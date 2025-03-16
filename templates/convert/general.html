@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}File Converter{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="mb-3">File Converter</h1>
+                <p class="lead text-muted">Convert your files between different formats</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="convertForm" action="{{ url_for('conversion.convert_file') }}" method="post" enctype="multipart/form-data">
+                        <!-- File Upload Section -->
+                        <div class="upload-section mb-4">
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-message">
+                                    <img src="/static/img/upload.png" alt="Upload" width="48" class="mb-3">
+                                    <p>Drag and drop your file here</p>
+                                    <span class="drop-subtitle">or</span>
+                                </div>
+                                
+                                <input type="file" id="fileInput" name="file" class="d-none">
+                                <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('fileInput').click()">
+                                    Choose File
+                                </button>
+                            </div>
+                            
+                            <div id="fileInfo" class="file-info d-none">
+                                <div class="file-details">
+                                    <div class="d-flex align-items-center">
+                                        <div class="file-icon me-3">
+                                            <i id="fileTypeIcon" class="bi bi-file-earmark fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <p class="file-name mb-0">File: <span id="fileName"></span></p>
+                                            <p class="file-size mb-0">Size: <span id="fileSize"></span></p>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="removeFileBtn">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversion Options Section -->
+                        <div id="conversionOptions" class="d-none">
+                            <h5 class="mb-3">Conversion Options</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="outputFormat" class="form-label">Output Format</label>
+                                    <select id="outputFormat" name="output_format" class="form-select" required>
+                                        <option value="">Select output format...</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="customFilename" class="form-label">Custom Filename (optional)</label>
+                                    <input type="text" id="customFilename" name="custom_filename" class="form-control" placeholder="Enter filename without extension">
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg" id="convertFileBtn">
+                                    <i class="bi bi-arrow-repeat me-2"></i> Convert File
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Conversion Types Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>
+                        Specialized Conversion Tools
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="{{ url_for('convert') }}?type=audio" class="conversion-type-btn">
+                                <div class="conversion-type-icon">
+                                    <i class="bi bi-music-note-beamed"></i>
+                                </div>
+                                <span>Audio Converter</span>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('convert') }}?type=image" class="conversion-type-btn">
+                                <div class="conversion-type-icon">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                                <span>Image Converter</span>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('convert') }}?type=document" class="conversion-type-btn">
+                                <div class="conversion-type-icon">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </div>
+                                <span>Document Converter</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PDF Tools Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-pdf me-2 text-danger"></i>
+                        PDF Tools
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row row-cols-2 row-cols-md-3 g-3">
+                        <div class="col">
+                            <a href="{{ url_for('pdf.split_pdf') }}" class="pdf-tool-btn">
+                                <i class="bi bi-scissors"></i>
+                                <span>Split PDF</span>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('pdf.merge_pdfs') }}" class="pdf-tool-btn">
+                                <i class="bi bi-front"></i>
+                                <span>Merge PDFs</span>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('pdf.compress_pdf') }}" class="pdf-tool-btn">
+                                <i class="bi bi-file-zip"></i>
+                                <span>Compress PDF</span>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('pdf.protect_pdf') }}" class="pdf-tool-btn">
+                                <i class="bi bi-shield-lock"></i>
+                                <span>Protect PDF</span>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('pdf.pdf_to_images') }}" class="pdf-tool-btn">
+                                <i class="bi bi-file-earmark-image"></i>
+                                <span>PDF to Images</span>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('pdf.pdf_operations') }}" class="pdf-tool-btn">
+                                <i class="bi bi-grid-3x3-gap"></i>
+                                <span>All PDF Tools</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .file-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .conversion-type-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 1.25rem;
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: background-color 0.2s, transform 0.2s;
+    }
+    
+    .conversion-type-btn:hover {
+        background-color: rgba(79, 70, 229, 0.05);
+        color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    
+    .conversion-type-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+    }
+    
+    .pdf-tool-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 1rem 0.5rem;
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: background-color 0.2s, transform 0.2s;
+    }
+    
+    .pdf-tool-btn:hover {
+        background-color: rgba(220, 53, 69, 0.05);
+        color: #dc3545;
+        transform: translateY(-2px);
+    }
+    
+    .pdf-tool-btn i {
+        font-size: 1.5rem;
+        color: #dc3545;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .conversion-type-btn:hover {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .conversion-type-icon {
+        color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .pdf-tool-btn i {
+        color: #ff6b6b;
+    }
+    
+    .dark-theme .pdf-tool-btn:hover {
+        background-color: rgba(255, 107, 107, 0.1);
+        color: #ff6b6b;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // File upload format options based on file type
+    const formatOptions = {
+        image: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'],
+        audio: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'],
+        document: ['pdf', 'docx', 'txt', 'md', 'html']
+    };
+    
+    // File type icons
+    const fileTypeIcons = {
+        // Images
+        'jpg': 'bi-file-earmark-image',
+        'jpeg': 'bi-file-earmark-image',
+        'png': 'bi-file-earmark-image',
+        'gif': 'bi-file-earmark-image',
+        'webp': 'bi-file-earmark-image',
+        'bmp': 'bi-file-earmark-image',
+        'tiff': 'bi-file-earmark-image',
+        // Audio
+        'mp3': 'bi-file-earmark-music',
+        'wav': 'bi-file-earmark-music',
+        'ogg': 'bi-file-earmark-music',
+        'flac': 'bi-file-earmark-music',
+        'aac': 'bi-file-earmark-music',
+        'm4a': 'bi-file-earmark-music',
+        // Documents
+        'pdf': 'bi-file-earmark-pdf',
+        'docx': 'bi-file-earmark-word',
+        'txt': 'bi-file-earmark-text',
+        'md': 'bi-markdown',
+        'html': 'bi-file-earmark-code'
+    };
+    
+    // Icon colors
+    const iconColors = {
+        'image': 'text-success',
+        'audio': 'text-info',
+        'document': 'text-primary',
+        'pdf': 'text-danger'
+    };
+    
+    // Elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileTypeIcon = document.getElementById('fileTypeIcon');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const conversionOptions = document.getElementById('conversionOptions');
+    const outputFormat = document.getElementById('outputFormat');
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo();
+        }
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', updateFileInfo);
+    
+    // Update file info and show conversion options
+    function updateFileInfo() {
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            // Show file info section
+            fileInfo.classList.remove('d-none');
+            dropZone.classList.add('d-none');
+            
+            // Set file type icon
+            const extension = getFileExtension(file.name).toLowerCase();
+            fileTypeIcon.className = 'bi fs-2';
+            fileTypeIcon.classList.add(fileTypeIcons[extension] || 'bi-file-earmark');
+            
+            // Set icon color based on file type
+            fileTypeIcon.classList.remove('text-primary', 'text-success', 'text-info', 'text-danger');
+            if (extension === 'pdf') {
+                fileTypeIcon.classList.add(iconColors['pdf']);
+            } else if (formatOptions.image.includes(extension)) {
+                fileTypeIcon.classList.add(iconColors['image']);
+            } else if (formatOptions.audio.includes(extension)) {
+                fileTypeIcon.classList.add(iconColors['audio']);
+            } else {
+                fileTypeIcon.classList.add(iconColors['document']);
+            }
+            
+            // Update output format options
+            updateOutputFormats(file);
+            
+            // Show conversion options
+            conversionOptions.classList.remove('d-none');
+        }
+    }
+    
+    // Update output format dropdown based on input file type
+    function updateOutputFormats(file) {
+        // Clear existing options
+        outputFormat.innerHTML = '<option value="">Select output format...</option>';
+        
+        // Determine file type
+        const extension = getFileExtension(file.name).toLowerCase();
+        let fileType = '';
+        
+        if (formatOptions.image.includes(extension)) {
+            fileType = 'image';
+        } else if (formatOptions.audio.includes(extension)) {
+            fileType = 'audio';
+        } else if (formatOptions.document.includes(extension) || extension === 'pdf') {
+            fileType = 'document';
+        }
+        
+        // Add appropriate conversion options
+        if (fileType) {
+            formatOptions[fileType].forEach(format => {
+                if (format !== extension) { // Don't allow converting to the same format
+                    const option = document.createElement('option');
+                    option.value = format;
+                    option.textContent = format.toUpperCase();
+                    outputFormat.appendChild(option);
+                }
+            });
+            
+            // Select first option as default
+            if (outputFormat.options.length > 1) {
+                outputFormat.selectedIndex = 1;
+            }
+        }
+    }
+    
+    // Remove file button
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.classList.add('d-none');
+        dropZone.classList.remove('d-none');
+        conversionOptions.classList.add('d-none');
+    });
+    
+    // Form submission
+    document.getElementById('convertForm').addEventListener('submit', function() {
+        // Show loading overlay
+        document.getElementById('loadingOverlay').classList.add('show');
+    });
+    
+    // Helper function to get file extension
+    function getFileExtension(filename) {
+        return filename.split('.').pop();
+    }
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+});
+</script>
+{% endblock %}

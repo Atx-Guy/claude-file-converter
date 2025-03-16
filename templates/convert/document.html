@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}Document Converter{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="mb-3">Document Converter</h1>
+                <p class="lead text-muted">Convert your documents between different formats</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="documentConvertForm" action="{{ url_for('conversion.convert_file') }}" method="post" enctype="multipart/form-data">
+                        <!-- File Upload Section -->
+                        <div class="upload-section mb-4">
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-message">
+                                    <img src="/static/img/icons/document.svg" alt="Document" width="48" class="mb-3">
+                                    <p>Drag and drop your document here</p>
+                                    <span class="drop-subtitle">or</span>
+                                </div>
+                                
+                                <input type="file" id="fileInput" name="file" class="d-none" accept=".pdf,.docx,.txt,.md,.html">
+                                <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('fileInput').click()">
+                                    Choose Document
+                                </button>
+                            </div>
+                            
+                            <div id="fileInfo" class="file-info d-none">
+                                <div class="file-details">
+                                    <div class="d-flex align-items-center">
+                                        <div class="document-preview me-3">
+                                            <i id="documentIcon" class="bi bi-file-earmark-text fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <p class="file-name mb-0">File: <span id="fileName"></span></p>
+                                            <p class="file-size mb-0">Size: <span id="fileSize"></span></p>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="removeFileBtn">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversion Options Section -->
+                        <div id="conversionOptions" class="d-none">
+                            <h5 class="mb-3">Conversion Options</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="outputFormat" class="form-label">Output Format</label>
+                                    <select id="outputFormat" name="output_format" class="form-select" required>
+                                        <option value="" selected disabled>Select format...</option>
+                                        <option value="pdf">PDF</option>
+                                        <option value="docx">DOCX</option>
+                                        <option value="txt">TXT</option>
+                                        <option value="md">Markdown</option>
+                                        <option value="html">HTML</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="customFilename" class="form-label">Custom Filename (optional)</label>
+                                    <input type="text" id="customFilename" name="custom_filename" class="form-control" placeholder="Enter filename without extension">
+                                </div>
+                            </div>
+                            
+                            <div id="formatSpecificOptions">
+                                <!-- PDF-specific options -->
+                                <div id="pdfOptions" class="format-options d-none">
+                                    <div class="mb-3">
+                                        <label for="pdfPageSize" class="form-label">Page Size</label>
+                                        <select id="pdfPageSize" name="page_size" class="form-select">
+                                            <option value="a4" selected>A4</option>
+                                            <option value="letter">Letter</option>
+                                            <option value="legal">Legal</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="pdfCompress" name="compress" checked>
+                                            <label class="form-check-label" for="pdfCompress">Compress PDF</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Text-specific options -->
+                                <div id="txtOptions" class="format-options d-none">
+                                    <div class="mb-3">
+                                        <label for="encoding" class="form-label">Text Encoding</label>
+                                        <select id="encoding" name="encoding" class="form-select">
+                                            <option value="utf-8" selected>UTF-8</option>
+                                            <option value="ascii">ASCII</option>
+                                            <option value="latin-1">Latin-1</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="lineEndings" class="form-label">Line Endings</label>
+                                        <select id="lineEndings" name="line_endings" class="form-select">
+                                            <option value="auto" selected>Auto-detect</option>
+                                            <option value="lf">Unix/Linux (LF)</option>
+                                            <option value="crlf">Windows (CRLF)</option>
+                                            <option value="cr">Mac Classic (CR)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg" id="convertDocumentBtn">
+                                    <i class="bi bi-arrow-repeat me-2"></i> Convert Document
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Format Compatibility Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2 text-info"></i>
+                        Format Compatibility
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>From ↓ To →</th>
+                                    <th>PDF</th>
+                                    <th>DOCX</th>
+                                    <th>TXT</th>
+                                    <th>MD</th>
+                                    <th>HTML</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>PDF</strong></td>
+                                    <td>-</td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-dash-circle-fill text-secondary"></i></td>
+                                    <td><i class="bi bi-dash-circle-fill text-secondary"></i></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>DOCX</strong></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td>-</td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>TXT</strong></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td>-</td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>MD</strong></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-dash-circle-fill text-secondary"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td>-</td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>HTML</strong></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-dash-circle-fill text-secondary"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td><i class="bi bi-check-circle-fill text-success"></i></td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2 text-muted small">
+                        <i class="bi bi-check-circle-fill text-success"></i> = Supported conversion<br>
+                        <i class="bi bi-dash-circle-fill text-secondary"></i> = Limited support or formatting may be lost
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .document-preview {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .format-options {
+        background-color: var(--bg-light);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .document-preview {
+        color: var(--dark-primary-color);
+    }
+    
+    .dark-theme .format-options {
+        background-color: var(--dark-input-bg);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const documentIcon = document.getElementById('documentIcon');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const conversionOptions = document.getElementById('conversionOptions');
+    const outputFormat = document.getElementById('outputFormat');
+    const pdfOptions = document.getElementById('pdfOptions');
+    const txtOptions = document.getElementById('txtOptions');
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo();
+        }
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', updateFileInfo);
+    
+    // Update file info and icon
+    function updateFileInfo() {
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            
+            // Check if it's a valid document type
+            const validTypes = [
+                'application/pdf',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain',
+                'text/markdown',
+                'text/html'
+            ];
+            
+            // Also check by extension for some types
+            const filename = file.name.toLowerCase();
+            const extension = filename.substring(filename.lastIndexOf('.') + 1);
+            
+            if (!validTypes.includes(file.type) && 
+                !['pdf', 'docx', 'txt', 'md', 'html'].includes(extension)) {
+                alert('Please select a valid document file (PDF, DOCX, TXT, MD, or HTML).');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            // Set appropriate icon
+            documentIcon.className = 'bi fs-2 text-primary';
+            if (file.type === 'application/pdf' || extension === 'pdf') {
+                documentIcon.classList.add('bi-file-earmark-pdf');
+                documentIcon.classList.remove('text-primary');
+                documentIcon.classList.add('text-danger');
+            } else if (file.type.includes('wordprocessingml.document') || extension === 'docx') {
+                documentIcon.classList.add('bi-file-earmark-word');
+                documentIcon.classList.remove('text-primary');
+                documentIcon.classList.add('text-primary');
+            } else if (file.type === 'text/plain' || extension === 'txt') {
+                documentIcon.classList.add('bi-file-earmark-text');
+            } else if (file.type === 'text/markdown' || extension === 'md') {
+                documentIcon.classList.add('bi-markdown');
+            } else if (file.type === 'text/html' || extension === 'html') {
+                documentIcon.classList.add('bi-file-earmark-code');
+            }
+            
+            // Show file info and conversion options
+            fileInfo.classList.remove('d-none');
+            dropZone.classList.add('d-none');
+            conversionOptions.classList.remove('d-none');
+            
+            // Set appropriate output format based on input format
+            setDefaultOutputFormat(extension);
+        }
+    }
+    
+    // Set default output format based on input format
+    function setDefaultOutputFormat(inputFormat) {
+        const formats = {
+            'pdf': 'docx',
+            'docx': 'pdf',
+            'txt': 'pdf',
+            'md': 'html',
+            'html': 'pdf'
+        };
+        
+        outputFormat.value = formats[inputFormat] || 'pdf';
+        
+        // Show format-specific options
+        updateFormatOptions();
+    }
+    
+    // Remove file button
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.classList.add('d-none');
+        dropZone.classList.remove('d-none');
+        conversionOptions.classList.add('d-none');
+    });
+    
+    // Update format-specific options when output format changes
+    outputFormat.addEventListener('change', updateFormatOptions);
+    
+    function updateFormatOptions() {
+        // Hide all format-specific options
+        const formatOptions = document.querySelectorAll('.format-options');
+        formatOptions.forEach(option => option.classList.add('d-none'));
+        
+        // Show appropriate options based on selected format
+        const selectedFormat = outputFormat.value;
+        if (selectedFormat === 'pdf') {
+            pdfOptions.classList.remove('d-none');
+        } else if (selectedFormat === 'txt') {
+            txtOptions.classList.remove('d-none');
+        }
+    }
+    
+    // Form submission
+    document.getElementById('documentConvertForm').addEventListener('submit', function(e) {
+        // Show loading overlay
+        document.getElementById('loadingOverlay').classList.add('show');
+    });
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+});
+</script>
+{% endblock %}
