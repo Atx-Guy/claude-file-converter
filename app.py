@@ -3,6 +3,8 @@ import os
 import subprocess
 import logging
 import mimetypes
+import traceback
+import io
 from flask import Flask, request, render_template, send_file, jsonify, redirect, url_for, make_response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
@@ -17,8 +19,8 @@ from routes.auth_routes import auth_bp
 from routes.conversion_routes import conversion_bp
 from routes.api_routes import api_bp
 from utils.file_utils import allowed_file, get_file_extension, create_temp_directory
-import traceback
-import io
+from utils.feature_detector import FeatureDetector
+
 import config
 
 # Configure logging
@@ -43,6 +45,20 @@ image_service = ImageService()
 document_service = DocumentService()
 pdf_service = PDFService()
 
+# Detect available features
+available_features = {
+    'pdf': FeatureDetector.get_pdf_features(),
+    'document': FeatureDetector.get_document_features(),
+    'image': FeatureDetector.get_image_features(),
+    'audio': FeatureDetector.get_audio_features()
+}
+
+# Log available features
+logger.info("Available PDF features: %s", available_features['pdf'])
+logger.info("Available document features: %s", available_features['document'])
+logger.info("Available image features: %s", available_features['image'])
+logger.info("Available audio features: %s", available_features['audio'])
+
 # Create temp directories
 create_temp_directory(app.config['TEMP_FOLDER'])
 
@@ -55,6 +71,13 @@ app.register_blueprint(api_bp)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+@app.context_processor
+def inject_features():
+    """Make available features accessible in templates."""
+    return {
+        'features': available_features
+    }
 
 @app.route('/')
 def index():

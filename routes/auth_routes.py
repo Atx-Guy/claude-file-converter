@@ -2,8 +2,10 @@
 import logging
 from flask import Blueprint, request, render_template, redirect, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User
-from werkzeug.security import check_password_hash
+from models.user import User
+from models import db
+from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint('auth', __name__)
@@ -73,7 +75,6 @@ def signup():
                 error = 'Email already registered.'
             else:
                 # Create new user
-                from flask_bcrypt import generate_password_hash
                 hashed_password = generate_password_hash(password).decode('utf-8')
                 
                 user = User(
@@ -143,7 +144,6 @@ def profile():
             elif len(new_password) < 8:
                 error = 'New password must be at least 8 characters long.'
             else:
-                from flask_bcrypt import generate_password_hash
                 current_user.password = generate_password_hash(new_password).decode('utf-8')
                 db.session.commit()
                 success = 'Password changed successfully.'

@@ -1,0 +1,23 @@
+{% macro feature_notice(feature_name, required_packages) %}
+<div class="alert alert-warning feature-notice" role="alert">
+    <h5 class="alert-heading">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        Limited {{ feature_name }} Functionality
+    </h5>
+    <p>This feature is currently running in limited mode because some required Python packages couldn't be installed.</p>
+    <hr>
+    <p class="mb-0">To enable full functionality, you need to install the following packages:</p>
+    <ul class="mb-0 mt-2">
+        {% for package in required_packages %}
+        <li><code>{{ package }}</code></li>
+        {% endfor %}
+    </ul>
+    <div class="mt-3">
+        <p class="mb-1"><strong>To install these packages:</strong></p>
+        <ol class="mb-0">
+            <li>Install Microsoft Visual C++ Build Tools from <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/" target="_blank">this link</a></li>
+            <li>Run this command: <code>pip install {{ required_packages|join(' ') }}</code></li>
+        </ol>
+    </div>
+</div>
+{% endmacro %}

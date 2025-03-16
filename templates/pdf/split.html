@@ -2,6 +2,11 @@
 
 {% block title %}Split PDF{% endblock %}
 
+{% from "components/feature_notice.html" import feature_notice %}
+{% if not features.pdf.advanced %}
+  {{ feature_notice("PDF", ["reportlab==3.6.12", "PyMuPDF==1.21.1"]) }}
+{% endif %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row">
