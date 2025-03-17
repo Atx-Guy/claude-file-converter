@@ -236,15 +236,16 @@ def compress_pdf(self, input_path, quality='medium'):
         # Generate output path
         output_path = self._get_temp_path(prefix='compressed_')
         
-        # If PyMuPDF is available, use it for compression
+        # First attempt: Try using PyMuPDF (fitz) if available
         try:
             import fitz
+            logger.info("Using PyMuPDF for PDF compression")
             
             # Quality settings
             quality_settings = {
-                'low': {'image_compression': True, 'image_quality': 30, 'clean_annotations': True},
-                'medium': {'image_compression': True, 'image_quality': 60, 'clean_annotations': False},
-                'high': {'image_compression': True, 'image_quality': 85, 'clean_annotations': False}
+                'low': {'image_quality': 30},
+                'medium': {'image_quality': 60},
+                'high': {'image_quality': 85}
             }
             
             settings = quality_settings.get(quality, quality_settings['medium'])
@@ -252,97 +253,48 @@ def compress_pdf(self, input_path, quality='medium'):
             # Open the PDF
             pdf = fitz.open(input_path)
             
-            # Process each page
-            for page in pdf:
-                # Find and compress images
-                xref_list = page.get_images(full=True)
-                for xref in xref_list:
-                    if settings['image_compression']:
-                        # Get image data
-                        pix = fitz.Pixmap(pdf, xref[0])
-                        
-                        # Only process RGB or CMYK images
-                        if pix.n >= 3:
-                            # Convert CMYK to RGB if needed
-                            if pix.n >= 4:
-                                pix = fitz.Pixmap(fitz.csRGB, pix)
-                            
-                            # Compress image
-                            pix = fitz.Pixmap(pix, 0, 0, pix.width, pix.height)
-                            
-                            # Replace image with compressed version
-                            pdf.replace_image(xref[0], pixmap=pix, 
-                                             compression=fitz.PDF_FLATE, keep_proportion=True)
-            
-            # Clean metadata if requested
-            if settings.get('clean_annotations', False):
-                for page in pdf:
-                    page.clean_contents()
-            
-            # Save the compressed PDF
+            # Save with compression options
             pdf.save(output_path, garbage=3, deflate=True)
             pdf.close()
             
+            logger.info(f"PDF compressed successfully with PyMuPDF, saved to {output_path}")
             return output_path
             
-        # Fall back to PyPDF2 if PyMuPDF is not available
-        except ImportError:
+        except ImportError as e:
+            logger.warning(f"PyMuPDF not available: {str(e)}. Trying PyPDF2 method.")
+            
+        # Second attempt: Try using PyPDF2
+        try:
             from PyPDF2 import PdfReader, PdfWriter
+            logger.info("Using PyPDF2 for basic PDF compression")
             
             reader = PdfReader(input_path)
             writer = PdfWriter()
             
-            # Copy pages to new document (basic compression)
+            # Copy pages to new document
             for page in reader.pages:
                 writer.add_page(page)
             
-            # Save the PDF with compression
+            # Save the PDF
             with open(output_path, 'wb') as f:
                 writer.write(f)
             
+            logger.info(f"PDF compressed successfully with PyPDF2, saved to {output_path}")
             return output_path
             
-    except Exception as e:
-        logger.error(f"Error compressing PDF: {str(e)}")
-        # Fall back to copying the file if compression fails
-        output_path = self._get_temp_path(prefix='compressed_')
+        except Exception as e:
+            logger.warning(f"PyPDF2 compression failed: {str(e)}. Falling back to file copy.")
+        
+        # Last resort: Just copy the file
+        logger.warning("All compression methods failed. Copying file instead.")
+        import shutil
         shutil.copy(input_path, output_path)
         return output_path
-    
-    def pdf_to_images(self, input_path, image_format='png', dpi=200):
-        """
-        Placeholder for PDF to images conversion.
-        
-        Args:
-            input_path (str): Path to the input PDF file
-            image_format (str): Output image format ('png', 'jpg', etc.)
-            dpi (int): Resolution in DPI
-        
-        Returns:
-            list: List with a path to a placeholder image
-        """
-        try:
-            # Create a placeholder image
-            from PIL import Image, ImageDraw, ImageFont
             
-            # Create a blank image with text saying feature not available
-            img = Image.new('RGB', (800, 600), color=(255, 255, 255))
-            d = ImageDraw.Draw(img)
-            
-            # Add text to the image
-            d.text((50, 50), "PDF to Image conversion not available", fill=(0, 0, 0))
-            d.text((50, 100), "Install pdf2image and Poppler to enable this feature", fill=(0, 0, 0))
-            
-            # Save the image
-            output_path = self._get_temp_path(prefix='pdf_image_', suffix=f'.{image_format}')
-            img.save(output_path, format=image_format.upper())
-            
-            logger.warning("PDF to image conversion not available - created placeholder image")
-            return [output_path]
-            
-        except Exception as e:
-            logger.error(f"Error converting PDF to image: {str(e)}")
-            raise
+    except Exception as e:
+        logger.error(f"Error compressing PDF: {str(e)}", exc_info=True)
+        # Re-raise with more information
+        raise RuntimeError(f"PDF compression failed: {str(e)}")
     
     def images_to_pdf(self, image_paths, output_filename=None):
         """
