@@ -235,3 +235,11 @@
 .dark-theme .table td {
     border-color: var(--dark-border-color);
 }
+
+.dark-theme .notification-success {
+    background-color: var(--dark-primary-color);
+}
+
+.dark-theme .notification-error {
+    background-color: #F87171;
+}

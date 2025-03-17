@@ -206,11 +206,19 @@ def compress_pdf():
             if quality not in ['low', 'medium', 'high']:
                 quality = 'medium'
             
-            # Compress PDF
+            # Get additional options
+            optimize_images = request.form.get('optimize_images') == 'on'
+            remove_metadata = request.form.get('remove_metadata') == 'on'
+            
+            # Compress PDF (pass additional options if your service supports them)
             output_path = pdf_service.compress_pdf(input_path, quality)
             
             # Determine output filename
-            output_filename = f"compressed_{secure_filename(os.path.splitext(file.filename)[0])}.pdf"
+            custom_filename = request.form.get('output_filename')
+            if custom_filename:
+                output_filename = f"{custom_filename}.pdf"
+            else:
+                output_filename = f"compressed_{secure_filename(os.path.splitext(file.filename)[0])}.pdf"
             
             # Record conversion for logged in users
             if current_user.is_authenticated:
@@ -218,7 +226,8 @@ def compress_pdf():
                     user_id=current_user.id,
                     operation='pdf_compress',
                     input_filename=file.filename,
-                    output_filename=output_filename
+                    output_filename=output_filename,
+                    status='completed'
                 )
                 db.session.add(conversion)
                 db.session.commit()

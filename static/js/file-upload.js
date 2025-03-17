@@ -99,16 +99,134 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Form submission handler
-    if (convertForm) {
-        convertForm.addEventListener('submit', function() {
-            // Show loading overlay
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) {
-                loadingOverlay.classList.add('show');
-            }
-        });
+   // In file-upload.js, replace the form submission handler
+
+// Enhanced form submission with elegant notifications
+document.getElementById('convertForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading overlay
+    document.getElementById('loadingOverlay').classList.add('show');
+    
+    // Use fetch API for AJAX submission
+    fetch(this.action, {
+        method: 'POST',
+        body: new FormData(this)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Conversion failed');
+            });
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        // Get filename from form if available or use default
+        const customFilename = document.getElementById('customFilename');
+        const outputFormat = document.getElementById('outputFormat');
+        let filename = 'converted_file';
+        
+        if (customFilename && customFilename.value) {
+            filename = `${customFilename.value}.${outputFormat.value}`;
+        } else if (fileName && fileName.textContent) {
+            const originalName = fileName.textContent.split('.')[0];
+            filename = `${originalName}.${outputFormat.value}`;
+        }
+        
+        a.download = filename;
+        
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Show success notification
+        showNotification('success', 'Conversion successful!', `Your file "${filename}" has been downloaded.`);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'Conversion failed', error.message || 'An error occurred during conversion. Please try again.');
+    })
+    .finally(() => {
+        // Hide loading overlay
+        document.getElementById('loadingOverlay').classList.remove('show');
+    });
+});
+
+// Elegant notification system
+function showNotification(type, title, message) {
+    // Create notification container if it doesn't exist
+    let notificationContainer = document.getElementById('notificationContainer');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'notificationContainer';
+        notificationContainer.style.position = 'fixed';
+        notificationContainer.style.top = '20px';
+        notificationContainer.style.right = '20px';
+        notificationContainer.style.zIndex = '9999';
+        notificationContainer.style.maxWidth = '350px';
+        document.body.appendChild(notificationContainer);
     }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.backgroundColor = type === 'success' ? '#4F46E5' : '#EF4444';
+    notification.style.color = 'white';
+    notification.style.padding = '16px';
+    notification.style.borderRadius = '6px';
+    notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+    notification.style.marginBottom = '10px';
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(40px)';
+    notification.style.transition = 'all 0.3s ease-in-out';
+    
+    // Add notification content
+    notification.innerHTML = `
+        <div style="display: flex; align-items: flex-start;">
+            <div style="margin-right: 12px; font-size: 20px;">
+                <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'}"></i>
+            </div>
+            <div>
+                <h6 style="margin: 0 0 5px 0; font-weight: 600;">${title}</h6>
+                <p style="margin: 0; font-size: 14px;">${message}</p>
+            </div>
+            <button style="background: none; border: none; color: white; margin-left: auto; cursor: pointer; font-size: 16px;" 
+                    onclick="this.parentElement.parentElement.remove()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    `;
+    
+    // Add to the DOM
+    notificationContainer.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(40px)';
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 5000);
+}
     
     // Helper function to get file extension
     function getFileExtension(filename) {

@@ -11,6 +11,9 @@ class Conversion(db.Model):
     input_filename = db.Column(db.String(255), nullable=False)
     output_filename = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='pending')  # pending, processing, completed, failed
+    error_message = db.Column(db.Text, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
     
     # Relationship with User model
     user = db.relationship('User', backref=db.backref('conversions', lazy=True))
