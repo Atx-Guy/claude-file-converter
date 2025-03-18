@@ -221,80 +221,88 @@ class PDFService:
             logger.error(f"Error rotating PDF: {str(e)}")
             raise
     
-def compress_pdf(self, input_path, quality='medium'):
-    """
-    Compress a PDF file to reduce its size.
-    
-    Args:
-        input_path (str): Path to the input PDF file
-        quality (str): Compression quality - 'low', 'medium', or 'high'
-    
-    Returns:
-        str: Path to the compressed PDF file
-    """
-    try:
-        # Generate output path
-        output_path = self._get_temp_path(prefix='compressed_')
+    def compress_pdf(self, input_path, quality='medium'):
+        """
+        Compress a PDF file to reduce its size.
         
-        # First attempt: Try using PyMuPDF (fitz) if available
+        Args:
+            input_path (str): Path to the input PDF file
+            quality (str): Compression quality - 'low', 'medium', or 'high'
+        
+        Returns:
+            str: Path to the compressed PDF file
+        """
         try:
-            import fitz
-            logger.info("Using PyMuPDF for PDF compression")
+            # Generate output path
+            output_path = self._get_temp_path(prefix='compressed_')
             
-            # Quality settings
-            quality_settings = {
-                'low': {'image_quality': 30},
-                'medium': {'image_quality': 60},
-                'high': {'image_quality': 85}
-            }
+            # First attempt: Try using PyPDF2's built-in compression
+            try:
+                reader = PdfReader(input_path)
+                writer = PdfWriter()
+                
+                # Copy pages with compression enabled
+                for page in reader.pages:
+                    writer.add_page(page)
+                
+                # Set compression parameters
+                writer.add_metadata(reader.metadata or {})
+                
+                # Save with compression
+                with open(output_path, 'wb') as output_file:
+                    writer.write(output_file)
+                
+                # Verify the output file is valid
+                try:
+                    PdfReader(output_path)
+                    return output_path
+                except Exception:
+                    logger.warning("Initial compression produced invalid PDF, trying alternative method")
+                    
+            except Exception as e:
+                logger.warning(f"First compression attempt failed: {str(e)}")
             
-            settings = quality_settings.get(quality, quality_settings['medium'])
+            # Second attempt: Try using PyMuPDF if available
+            try:
+                import fitz
+                logger.info("Using PyMuPDF for PDF compression")
+                
+                # Open the PDF
+                pdf = fitz.open(input_path)
+                
+                # Quality settings
+                quality_settings = {
+                    'low': {'garbage': 4, 'clean': True, 'deflate': True, 'linear': True},
+                    'medium': {'garbage': 3, 'clean': True, 'deflate': True},
+                    'high': {'garbage': 2, 'clean': True}
+                }
+                
+                settings = quality_settings.get(quality, quality_settings['medium'])
+                
+                # Save with compression options
+                pdf.save(output_path, **settings)
+                pdf.close()
+                
+                # Verify the output file is valid
+                try:
+                    PdfReader(output_path)
+                    return output_path
+                except Exception:
+                    logger.warning("PyMuPDF compression produced invalid PDF, falling back to simple copy")
+                    
+            except ImportError:
+                logger.warning("PyMuPDF not available")
+            except Exception as e:
+                logger.warning(f"PyMuPDF compression failed: {str(e)}")
             
-            # Open the PDF
-            pdf = fitz.open(input_path)
-            
-            # Save with compression options
-            pdf.save(output_path, garbage=3, deflate=True)
-            pdf.close()
-            
-            logger.info(f"PDF compressed successfully with PyMuPDF, saved to {output_path}")
+            # Final fallback: Copy the file if compression fails
+            logger.warning("Compression failed, copying original file")
+            shutil.copy2(input_path, output_path)
             return output_path
-            
-        except ImportError as e:
-            logger.warning(f"PyMuPDF not available: {str(e)}. Trying PyPDF2 method.")
-            
-        # Second attempt: Try using PyPDF2
-        try:
-            from PyPDF2 import PdfReader, PdfWriter
-            logger.info("Using PyPDF2 for basic PDF compression")
-            
-            reader = PdfReader(input_path)
-            writer = PdfWriter()
-            
-            # Copy pages to new document
-            for page in reader.pages:
-                writer.add_page(page)
-            
-            # Save the PDF
-            with open(output_path, 'wb') as f:
-                writer.write(f)
-            
-            logger.info(f"PDF compressed successfully with PyPDF2, saved to {output_path}")
-            return output_path
-            
+                
         except Exception as e:
-            logger.warning(f"PyPDF2 compression failed: {str(e)}. Falling back to file copy.")
-        
-        # Last resort: Just copy the file
-        logger.warning("All compression methods failed. Copying file instead.")
-        import shutil
-        shutil.copy(input_path, output_path)
-        return output_path
-            
-    except Exception as e:
-        logger.error(f"Error compressing PDF: {str(e)}", exc_info=True)
-        # Re-raise with more information
-        raise RuntimeError(f"PDF compression failed: {str(e)}")
+            logger.error(f"Error during PDF compression: {str(e)}", exc_info=True)
+            raise RuntimeError(f"PDF compression failed: {str(e)}")
     
     def images_to_pdf(self, image_paths, output_filename=None):
         """
