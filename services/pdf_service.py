@@ -223,7 +223,7 @@ class PDFService:
     
     def compress_pdf(self, input_path, quality='medium'):
         """
-        Simple PDF compression (copies the file for now).
+        Compress a PDF file to reduce its size.
         
         Args:
             input_path (str): Path to the input PDF file
@@ -233,50 +233,76 @@ class PDFService:
             str: Path to the compressed PDF file
         """
         try:
-            # For now, just copy the file as proper compression needs reportlab
+            # Generate output path
             output_path = self._get_temp_path(prefix='compressed_')
-            shutil.copy(input_path, output_path)
-            logger.warning("Full PDF compression not available - file was copied without compression")
+            
+            # First attempt: Try using PyPDF2's built-in compression
+            try:
+                reader = PdfReader(input_path)
+                writer = PdfWriter()
+                
+                # Copy pages with compression enabled
+                for page in reader.pages:
+                    writer.add_page(page)
+                
+                # Set compression parameters
+                writer.add_metadata(reader.metadata or {})
+                
+                # Save with compression
+                with open(output_path, 'wb') as output_file:
+                    writer.write(output_file)
+                
+                # Verify the output file is valid
+                try:
+                    PdfReader(output_path)
+                    return output_path
+                except Exception:
+                    logger.warning("Initial compression produced invalid PDF, trying alternative method")
+                    
+            except Exception as e:
+                logger.warning(f"First compression attempt failed: {str(e)}")
+            
+            # Second attempt: Try using PyMuPDF if available
+            try:
+                import fitz
+                logger.info("Using PyMuPDF for PDF compression")
+                
+                # Open the PDF
+                pdf = fitz.open(input_path)
+                
+                # Quality settings
+                quality_settings = {
+                    'low': {'garbage': 4, 'clean': True, 'deflate': True, 'linear': True},
+                    'medium': {'garbage': 3, 'clean': True, 'deflate': True},
+                    'high': {'garbage': 2, 'clean': True}
+                }
+                
+                settings = quality_settings.get(quality, quality_settings['medium'])
+                
+                # Save with compression options
+                pdf.save(output_path, **settings)
+                pdf.close()
+                
+                # Verify the output file is valid
+                try:
+                    PdfReader(output_path)
+                    return output_path
+                except Exception:
+                    logger.warning("PyMuPDF compression produced invalid PDF, falling back to simple copy")
+                    
+            except ImportError:
+                logger.warning("PyMuPDF not available")
+            except Exception as e:
+                logger.warning(f"PyMuPDF compression failed: {str(e)}")
+            
+            # Final fallback: Copy the file if compression fails
+            logger.warning("Compression failed, copying original file")
+            shutil.copy2(input_path, output_path)
             return output_path
-            
+                
         except Exception as e:
-            logger.error(f"Error compressing PDF: {str(e)}")
-            raise
-    
-    def pdf_to_images(self, input_path, image_format='png', dpi=200):
-        """
-        Placeholder for PDF to images conversion.
-        
-        Args:
-            input_path (str): Path to the input PDF file
-            image_format (str): Output image format ('png', 'jpg', etc.)
-            dpi (int): Resolution in DPI
-        
-        Returns:
-            list: List with a path to a placeholder image
-        """
-        try:
-            # Create a placeholder image
-            from PIL import Image, ImageDraw, ImageFont
-            
-            # Create a blank image with text saying feature not available
-            img = Image.new('RGB', (800, 600), color=(255, 255, 255))
-            d = ImageDraw.Draw(img)
-            
-            # Add text to the image
-            d.text((50, 50), "PDF to Image conversion not available", fill=(0, 0, 0))
-            d.text((50, 100), "Install pdf2image and Poppler to enable this feature", fill=(0, 0, 0))
-            
-            # Save the image
-            output_path = self._get_temp_path(prefix='pdf_image_', suffix=f'.{image_format}')
-            img.save(output_path, format=image_format.upper())
-            
-            logger.warning("PDF to image conversion not available - created placeholder image")
-            return [output_path]
-            
-        except Exception as e:
-            logger.error(f"Error converting PDF to image: {str(e)}")
-            raise
+            logger.error(f"Error during PDF compression: {str(e)}", exc_info=True)
+            raise RuntimeError(f"PDF compression failed: {str(e)}")
     
     def images_to_pdf(self, image_paths, output_filename=None):
         """

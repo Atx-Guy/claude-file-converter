@@ -186,6 +186,7 @@ def merge_pdfs():
     
     return render_template('pdf/merge.html')
 
+# In routes/pdf_routes.py
 @pdf_bp.route('/compress', methods=['GET', 'POST'])
 def compress_pdf():
     """Compress PDF to reduce file size."""
@@ -232,8 +233,11 @@ def compress_pdf():
             return create_download_response(output_path, output_filename)
         
         except Exception as e:
-            logger.error(f"Error compressing PDF: {str(e)}")
-            return jsonify({'error': 'An error occurred during PDF compression'}), 500
+            logger.error(f"Error compressing PDF: {str(e)}", exc_info=True)  # Log full stack trace
+            error_message = str(e)
+            if len(error_message) > 100:  # Trim very long messages
+                error_message = error_message[:100] + "..."
+            return jsonify({'error': f"PDF compression failed: {error_message}"}), 500
     
     return render_template('pdf/compress.html')
 

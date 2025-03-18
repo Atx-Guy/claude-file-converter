@@ -1,4 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Compress PDF{% endblock %}
+
 {% from "components/feature_notice.html" import feature_notice %}
 {% if not features.pdf.advanced %}
-  {{ feature_notice("PDF", ["reportlab==3.6.12", "PyMuPDF==1.21.1"]) }}
+  {{ feature_notice("PDF Compression", ["reportlab==3.6.12", "PyMuPDF==1.21.1"]) }}
 {% endif %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="mb-3">Compress PDF</h1>
+                <p class="lead text-muted">Reduce PDF file size while preserving quality</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="pdfCompressForm" action="{{ url_for('pdf.compress_pdf') }}" method="post" enctype="multipart/form-data">
+                        <!-- File Upload Section -->
+                        <div class="upload-section mb-4">
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-message">
+                                    <img src="/static/img/icons/pdf.svg" alt="PDF" width="48" class="mb-3">
+                                    <p>Drag and drop your PDF file here</p>
+                                    <span class="drop-subtitle">or</span>
+                                </div>
+                                
+                                <input type="file" id="fileInput" name="file" class="d-none" accept=".pdf">
+                                <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('fileInput').click()">
+                                    Choose PDF File
+                                </button>
+                            </div>
+                            
+                            <div id="fileInfo" class="file-info d-none">
+                                <div class="file-details">
+                                    <div class="d-flex align-items-center">
+                                        <div class="pdf-icon me-3">
+                                            <i class="bi bi-file-earmark-pdf fs-2 text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <p class="file-name mb-0">File: <span id="fileName"></span></p>
+                                            <p class="file-size mb-0">Size: <span id="fileSize"></span></p>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="removeFileBtn">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Compression Options Section -->
+                        <div id="compressionOptions" class="d-none">
+                            <h5 class="mb-3">Compression Options</h5>
+                            
+                            <div class="mb-4">
+                                <label for="quality" class="form-label">Compression Level</label>
+                                <div class="compression-level-selector">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="quality" id="lowQuality" value="low">
+                                        <label class="form-check-label" for="lowQuality">
+                                            <div class="quality-option">
+                                                <div class="quality-icon">
+                                                    <i class="bi bi-file-zip text-success"></i>
+                                                </div>
+                                                <div class="quality-details">
+                                                    <span class="quality-name">Maximum Compression</span>
+                                                    <span class="quality-desc">Smaller file size, lower quality</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="quality" id="mediumQuality" value="medium" checked>
+                                        <label class="form-check-label" for="mediumQuality">
+                                            <div class="quality-option">
+                                                <div class="quality-icon">
+                                                    <i class="bi bi-file-zip text-primary"></i>
+                                                </div>
+                                                <div class="quality-details">
+                                                    <span class="quality-name">Balanced</span>
+                                                    <span class="quality-desc">Good balance of size and quality</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="quality" id="highQuality" value="high">
+                                        <label class="form-check-label" for="highQuality">
+                                            <div class="quality-option">
+                                                <div class="quality-icon">
+                                                    <i class="bi bi-file-zip text-warning"></i>
+                                                </div>
+                                                <div class="quality-details">
+                                                    <span class="quality-name">Minimal Compression</span>
+                                                    <span class="quality-desc">Larger file size, best quality</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="outputFilename" class="form-label">Output Filename (optional)</label>
+                                <input type="text" id="outputFilename" name="output_filename" class="form-control" placeholder="Leave blank to use default name">
+                                <div class="form-text">The extension (.pdf) will be added automatically</div>
+                            </div>
+                            
+                            <div class="compression-options-advanced">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="optimizeImages" name="optimize_images" checked>
+                                    <label class="form-check-label" for="optimizeImages">
+                                        Optimize images in PDF
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="removeMetadata" name="remove_metadata" checked>
+                                    <label class="form-check-label" for="removeMetadata">
+                                        Remove metadata to reduce file size
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg" id="compressPdfBtn">
+                                    <i class="bi bi-file-zip me-2"></i> Compress PDF
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Compression Details Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2 text-info"></i>
+                        About PDF Compression
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>PDF compression reduces file size while attempting to maintain visual quality. Here's how our compression levels work:</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table compression-table">
+                            <thead>
+                                <tr>
+                                    <th>Compression Level</th>
+                                    <th>Best For</th>
+                                    <th>Size Reduction</th>
+                                    <th>Quality Impact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-success">Maximum</span></td>
+                                    <td>Email, web uploads</td>
+                                    <td>70-90%</td>
+                                    <td>Noticeable quality loss</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-primary">Balanced</span></td>
+                                    <td>General use, printing</td>
+                                    <td>40-60%</td>
+                                    <td>Minor quality loss</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning">Minimal</span></td>
+                                    <td>Professional printing, archiving</td>
+                                    <td>20-30%</td>
+                                    <td>Virtually no quality loss</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Results may vary depending on the content of your PDF. Documents with many images typically see greater compression benefits.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pdf-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .compression-level-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .form-check-inline {
+        margin-right: 0;
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .quality-option {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-check-input:checked + .form-check-label .quality-option {
+        border-color: var(--primary-color);
+        background-color: rgba(79, 70, 229, 0.05);
+    }
+    
+    .quality-icon {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+    
+    .quality-details {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .quality-name {
+        font-weight: 500;
+    }
+    
+    .quality-desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
+    .compression-table th,
+    .compression-table td {
+        vertical-align: middle;
+    }
+    
+    /* Dark theme adjustments */
+    .dark-theme .pdf-icon {
+        color: #ff6b6b !important;
+    }
+    
+    .dark-theme .form-check-input:checked + .form-check-label .quality-option {
+        border-color: var(--dark-primary-color);
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+    
+    .dark-theme .quality-desc {
+        color: var(--dark-text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const compressionOptions = document.getElementById('compressionOptions');
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo();
+        }
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', updateFileInfo);
+    
+    // Update file info
+    function updateFileInfo() {
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            
+            // Check if it's a PDF
+            if (!file.type.match('application/pdf')) {
+                alert('Please select a PDF file.');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            // Show file info and compression options
+            fileInfo.classList.remove('d-none');
+            dropZone.classList.add('d-none');
+            compressionOptions.classList.remove('d-none');
+            
+            // Set default output filename (original name + compressed)
+            if (!document.getElementById('outputFilename').value) {
+                const originalName = file.name.replace(/\.pdf$/i, '');
+                document.getElementById('outputFilename').value = `${originalName}_compressed`;
+            }
+        }
+    }
+    
+    // Remove file button
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.classList.add('d-none');
+        dropZone.classList.remove('d-none');
+        compressionOptions.classList.add('d-none');
+    });
+    
+    // Form submission
+    document.getElementById('pdfCompressForm').addEventListener('submit', function() {
+        // Show loading overlay
+        document.getElementById('loadingOverlay').classList.add('show');
+    });
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+});
+</script>
+{% endblock %}
