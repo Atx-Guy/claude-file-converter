@@ -236,10 +236,27 @@
     border-color: var(--dark-border-color);
 }
 
-.dark-theme .notification-success {
-    background-color: var(--dark-primary-color);
+/* Dark theme support */
+.dark-theme .notification {
+    background-color: var(--dark-card-bg);
 }
 
-.dark-theme .notification-error {
-    background-color: #F87171;
+.dark-theme .notification-success .notification-icon {
+    color: var(--dark-primary-color);
+}
+
+.dark-theme .notification-error .notification-icon {
+    color: #F87171;
+}
+
+.dark-theme .notification-message {
+    color: var(--dark-text-secondary);
+}
+
+.dark-theme .notification-close {
+    color: var(--dark-text-secondary);
+}
+
+.dark-theme .notification-close:hover {
+    color: var(--dark-text-primary);
 }

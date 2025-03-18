@@ -18,7 +18,7 @@
             
             <div class="card">
                 <div class="card-body p-4">
-                    <form id="pdfMergeForm" action="{{ url_for('pdf.merge_pdfs') }}" method="post" enctype="multipart/form-data">
+                    <form id="pdfMergeForm" action="{{ url_for('pdf.merge_pdfs') }}" method="post" enctype="multipart/form-data" data-ajax-form>
                         <!-- File Upload Section -->
                         <div class="upload-section mb-4">
                             <div id="dropZone" class="drop-zone">

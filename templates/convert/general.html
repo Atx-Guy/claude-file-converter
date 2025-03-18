@@ -13,7 +13,7 @@
             
             <div class="card">
                 <div class="card-body p-4">
-                    <form id="convertForm" action="{{ url_for('conversion.convert_file') }}" method="post" enctype="multipart/form-data">
+                    <form id="convertForm" action="{{ url_for('conversion.convert_file') }}" method="post" enctype="multipart/form-data" data-ajax-form>
                         <!-- File Upload Section -->
                         <div class="upload-section mb-4">
                             <div id="dropZone" class="drop-zone">
